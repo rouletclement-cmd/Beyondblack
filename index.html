@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Couloir prototype</title>
+<style>
+:root{--bg:#101112;--ink:#efe7d6;--muted:#a9a293;--accent:#e9c46a}
+:root:not([data-theme="light"]){}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#101112}}
+:root[data-theme="dark"]{--bg:#101112}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden;touch-action:none}
+canvas{display:block}
+#ov{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(10,10,11,.72);z-index:5;padding:16px;box-sizing:border-box}
+#card{max-width:420px;text-align:center;line-height:1.5}
+#card h1{font-weight:500;font-size:20px;margin:0 0 6px;letter-spacing:.02em}
+#card p{color:var(--muted);font-size:14px;margin:6px 0}
+#go{margin-top:14px;background:var(--accent);color:#1b1b1b;border:0;border-radius:8px;padding:10px 20px;font-size:15px;cursor:pointer}
+#hud{position:fixed;left:12px;bottom:10px;font-size:12px;color:#d9d0bd;opacity:.75;z-index:3;pointer-events:none}
+#cross{position:fixed;left:50%;top:50%;width:4px;height:4px;margin:-2px;border-radius:50%;background:rgba(255,255,255,.55);z-index:3;pointer-events:none}
+#cross.hot{width:14px;height:14px;margin:-7px;background:transparent;border:2px solid rgba(255,255,255,.85);box-sizing:border-box}
+#zoom{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(20,20,20,.55);z-index:6;padding:16px;box-sizing:border-box;cursor:pointer}
+#zc{background:#fbfaf7;color:#1b1b1b;width:min(520px,100%);padding:34px 36px 28px;box-sizing:border-box;box-shadow:0 18px 50px rgba(0,0,0,.35)}
+#zc h2{font:600 30px Georgia,serif;margin:0 0 18px}
+#zc p{font:17px Helvetica,Arial,sans-serif;color:#3a3a3a;margin:6px 0}
+#zc .s{color:#8a8a8a;font-size:14px;margin-top:22px}
+#zc .x{color:#9a9a9a;font-size:12px;margin-top:14px}
+#catv .hs{display:none;border-radius:6px;outline:2px solid transparent;transition:outline-color .15s}#catv .hs:hover{outline-color:rgba(60,90,200,.55)}#catv.links .hs{display:block}
+#stick{position:fixed;left:24px;bottom:40px;width:110px;height:110px;border-radius:50%;border:2px solid rgba(255,255,255,.25);display:none;z-index:4}
+#knob{position:absolute;left:35px;top:35px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.35)}
+</style>
+</head>
+<body>
+<div id="ov"><div id="card">
+<h1>Couloir · prototype 03</h1>
+<p>15 m × 2 m × 2,50 m · murs blanc grain Arches · béton gris clair</p><p>Le chemin noir · cinq œuvres</p>
+<p id="help">Clic pour entrer. ZQSD / WASD ou flèches pour marcher, souris pour regarder (ou cliquer-glisser si le pointeur ne se verrouille pas), Maj pour marcher plus vite, clic sur une œuvre, un cartel ou un texte pour l'agrandir, catalogue et livre d’or derrière la porte du fond, porte « Sortie » de la petite pièce pour quitter.</p>
+<button id="go">Entrer</button>
+</div></div>
+<div id="cross"></div>
+<div id="hud"></div>
+<div id="zoom"><div id="zc"><h2 id="zt"></h2><p id="zd"></p><p id="zm"></p><p class="s">CRt. · Le chemin noir</p><p class="x">Clic ou Échap pour fermer</p></div></div>
+<div id="bye" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#f3f1ea;color:#1b1b1b;z-index:7;padding:16px;box-sizing:border-box;text-align:center;overflow:auto"><div style="max-width:460px">
+<p style="font:600 32px Georgia,serif;margin:0 0 8px">Merci de votre visite</p>
+<p style="font:15px Helvetica,Arial,sans-serif;color:#6a6a6a;margin:0 0 26px">Beyond Black : le chemin noir · CRt.</p>
+<p style="font:18px/1.55 Georgia,serif;margin:0 0 20px">Le chemin continue sur Instagram. Suivre <b>@clem.ancre</b>, c’est soutenir ce travail et découvrir les prochaines pièces avant tout le monde.</p>
+<a href="https://www.instagram.com/clem.ancre/" target="_blank" rel="noopener" style="display:inline-block;background:#1b1b1b;color:#fbfaf7;text-decoration:none;border-radius:999px;padding:13px 26px;font:600 16px Helvetica,Arial,sans-serif">Suivre @clem.ancre sur Instagram</a>
+<a href="https://linktr.ee/qr/b8b30b2b-31df-4f47-bb0b-95d1b9ca1231" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:12px;margin:22px auto 0;text-decoration:none;color:#1b1b1b;font:15px Helvetica,Arial,sans-serif"><img src="art/linktree.png" alt="QR code Linktree" style="width:64px;height:64px;border-radius:6px;background:#fff;padding:4px"><span>Tous mes liens · Linktree</span></a>
+<button id="again" style="margin-top:28px;background:none;color:#6a6a6a;border:1px solid #bdb8ad;border-radius:8px;padding:9px 18px;font-size:14px;cursor:pointer">Revisiter l’exposition</button></div></div>
+<div id="imgv" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#000;z-index:6;cursor:pointer;padding:16px;box-sizing:border-box"><img id="imgi" alt="" style="max-width:100%;max-height:100%;object-fit:contain"><p style="position:fixed;bottom:12px;left:0;right:0;text-align:center;color:#8a8a8a;font:13px Helvetica,Arial,sans-serif;margin:0" id="imgc"></p></div>
+<div id="txv" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(15,15,15,.6);z-index:6;cursor:pointer;padding:16px;box-sizing:border-box"><div style="background:#fbfaf7;color:#1d1d1d;max-width:980px;width:100%;max-height:100%;overflow:auto;padding:40px 44px 30px;box-sizing:border-box;box-shadow:0 18px 50px rgba(0,0,0,.35)"><h2 id="txh" style="font:500 34px Georgia,serif;margin:0 0 4px"></h2><p id="txs" style="font:italic 18px Georgia,serif;color:#4a4a4a;margin:0 0 18px"></p><div id="txb" style="column-width:320px;column-gap:44px;font:17px/1.6 Georgia,serif"></div><p style="font:12px Helvetica,Arial,sans-serif;color:#9a9a9a;margin:18px 0 0">Clic ou Échap pour fermer</p></div></div>
+<div id="catv" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#000;z-index:6;padding:16px 56px 44px;box-sizing:border-box"><div id="catw" style="position:relative;display:inline-block;line-height:0;max-width:100%"><img id="cati" alt="" style="display:block;max-width:100%;max-height:calc(100vh - 60px);box-shadow:0 10px 40px rgba(255,255,255,.06)"><a id="catl" href="#" target="_blank" rel="noopener" style="position:absolute;inset:0;cursor:pointer"></a><a class="hs" id="hsac" href="https://art-confidential.com/artiste/2705-clement-rt" target="_blank" rel="noopener" title="Art Confidential" style="position:absolute;left:16.5%;top:41.6%;width:67%;height:10.6%"></a><a class="hs" id="hsig" href="https://www.instagram.com/clem.ancre/" target="_blank" rel="noopener" title="Instagram" style="position:absolute;left:24%;top:53.2%;width:52%;height:9%"></a></div><button id="catp" aria-label="Page précédente" style="position:fixed;left:8px;top:50%;transform:translateY(-50%);background:none;border:0;color:#ddd;font-size:42px;cursor:pointer;padding:8px">‹</button><button id="catn2" aria-label="Page suivante" style="position:fixed;right:8px;top:50%;transform:translateY(-50%);background:none;border:0;color:#ddd;font-size:42px;cursor:pointer;padding:8px">›</button><button id="catx" style="position:fixed;right:14px;top:12px;background:#fbfaf7;border:0;border-radius:999px;color:#1b1b1b;font:600 14px Helvetica,Arial,sans-serif;padding:9px 16px;cursor:pointer;z-index:2;box-shadow:0 4px 16px rgba(0,0,0,.4)">✕ Fermer le catalogue</button><p style="position:fixed;bottom:12px;left:0;right:0;text-align:center;color:#8a8a8a;font:13px Helvetica,Arial,sans-serif;margin:0"><span id="catn"></span> · Catalogue Le chemin noir · flèches pour tourner les pages, Échap pour fermer</p></div>
+<div id="gb" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(15,15,15,.6);z-index:6;padding:16px;box-sizing:border-box">
+<div style="background:#fbfaf7;color:#1d1d1d;max-width:720px;width:100%;max-height:100%;overflow:auto;padding:30px 34px 24px;box-sizing:border-box;box-shadow:0 18px 50px rgba(0,0,0,.35);position:relative">
+<button id="gbx" style="position:absolute;right:14px;top:12px;background:#1b1b1b;color:#fbfaf7;border:0;border-radius:999px;padding:7px 14px;font:600 13px Helvetica,Arial,sans-serif;cursor:pointer">✕ Fermer</button>
+<h2 style="font:500 30px Georgia,serif;margin:0 0 4px">Livre d’or</h2>
+<p style="font:italic 16px Georgia,serif;color:#4a4a4a;margin:0 0 18px">Beyond Black : le chemin noir · un mot, si vous le souhaitez</p>
+<div id="gbform"><input id="gbn" maxlength="60" placeholder="Votre nom (facultatif)" style="width:100%;box-sizing:border-box;font:16px Georgia,serif;padding:9px 11px;border:1px solid #cfcabf;border-radius:6px;background:#fff;margin-bottom:8px">
+<textarea id="gbt" maxlength="600" rows="4" placeholder="Votre mot…" style="width:100%;box-sizing:border-box;font:16px/1.5 Georgia,serif;padding:9px 11px;border:1px solid #cfcabf;border-radius:6px;background:#fff;resize:vertical"></textarea>
+<div style="display:flex;align-items:center;gap:12px;margin-top:8px"><button id="gbs" style="background:#1b1b1b;color:#fbfaf7;border:0;border-radius:8px;padding:9px 18px;font:600 14px Helvetica,Arial,sans-serif;cursor:pointer">Signer le livre d’or</button><span id="gbm" style="font:13px Helvetica,Arial,sans-serif;color:#6a6a6a"></span></div></div>
+<p id="gbna" style="display:none;font:14px Helvetica,Arial,sans-serif;color:#6a6a6a"></p>
+<div id="gbl" style="margin-top:22px;border-top:1px solid #d8d4ca"></div></div></div>
+<div id="stick"><div id="knob"></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(()=>{
+const L=15,W=2,H=3.5,EYE=1.65,R=0.28;
+const touch=matchMedia('(pointer:coarse)').matches;
+if(touch)document.getElementById('help').textContent="Joystick à gauche pour marcher, glisse à droite pour regarder.";
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.outputEncoding=THREE.sRGBEncoding;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=0.95;
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x0e0e0f);
+const cam=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,0.05,60);
+cam.rotation.order='YXZ';
+let px=0,pz=L/2-0.8,yaw=0,pitch=0;
+
+// textures
+function noiseTex(base,amp,size,streak){const c=document.createElement('canvas');c.width=c.height=size;const g=c.getContext('2d');g.fillStyle=base;g.fillRect(0,0,size,size);const im=g.getImageData(0,0,size,size),d=im.data;for(let i=0;i<d.length;i+=4){const n=(Math.random()-.5)*amp;d[i]+=n;d[i+1]+=n;d[i+2]+=n;}g.putImageData(im,0,0);
+ if(streak){for(let k=0;k<70;k++){g.fillStyle=`rgba(${Math.random()<.5?255:0},${Math.random()<.5?255:0},${Math.random()<.5?255:0},0.02)`;g.fillStyle=Math.random()<.5?`rgba(255,255,255,${streak*0.025})`:`rgba(0,0,0,${streak*0.04})`;g.beginPath();g.ellipse(Math.random()*size,Math.random()*size,40+Math.random()*160,20+Math.random()*90,Math.random()*3,0,7);g.fill();}}
+ const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.encoding=THREE.sRGBEncoding;t.anisotropy=8;return t;}
+function roughTex(size){const c=document.createElement('canvas');c.width=c.height=size;const g=c.getContext('2d');g.fillStyle='#5a5a5a';g.fillRect(0,0,size,size);for(let k=0;k<120;k++){g.fillStyle=Math.random()<.5?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.06)';g.beginPath();g.ellipse(Math.random()*size,Math.random()*size,30+Math.random()*140,20+Math.random()*80,Math.random()*3,0,7);g.fill();}const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;return t;}
+
+// Arches 300 g : grain fin + petites cuvettes
+function archesTex(){const N=1024,c=document.createElement('canvas');c.width=c.height=N;const g=c.getContext('2d');
+ g.fillStyle='#808080';g.fillRect(0,0,N,N);
+ for(let k=0;k<9000;k++){const x=Math.random()*N,y=Math.random()*N,r=2+Math.random()*7;const v=Math.random()<.5?255:0;g.fillStyle=`rgba(${v},${v},${v},${0.05+Math.random()*0.07})`;g.beginPath();g.ellipse(x,y,r,r*(0.6+Math.random()*0.6),Math.random()*3,0,7);g.fill();}
+ const im=g.getImageData(0,0,N,N),d=im.data;for(let i=0;i<d.length;i+=4){const n=(Math.random()-.5)*26;d[i]+=n;d[i+1]+=n;d[i+2]+=n;}g.putImageData(im,0,0);
+ const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=8;return t;}
+function tintTex(src,base,amt){const c=document.createElement('canvas');c.width=c.height=src.image.width;const g=c.getContext('2d');g.fillStyle=base;g.fillRect(0,0,c.width,c.height);g.globalAlpha=amt;g.globalCompositeOperation='overlay';g.drawImage(src.image,0,0);const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.encoding=THREE.sRGBEncoding;t.anisotropy=8;return t;}
+const grain=archesTex();
+const wallMap=tintTex(grain,'#f3f1ea',0.35);
+const floorMap=noiseTex('#b4b2ad',9,1024,0.35);floorMap.repeat.set(1,3);
+const floorRough=roughTex(512);floorRough.repeat.set(1,2.3);
+
+const pm=new THREE.PMREMGenerator(renderer);
+const envScene=new THREE.Scene();envScene.background=new THREE.Color(0x8a8a86);
+const envLight=new THREE.Mesh(new THREE.PlaneGeometry(4,4),new THREE.MeshBasicMaterial({color:0xffffff}));envLight.position.y=5;envLight.rotation.x=Math.PI/2;envScene.add(envLight);
+const env=pm.fromScene(envScene,0.04).texture;
+
+const floorMat=new THREE.MeshStandardMaterial({map:floorMap,roughnessMap:floorRough,roughness:0.85,metalness:0.0,envMap:env,envMapIntensity:0.18});
+function wallMatFor(rx,ry){const m=wallMap.clone();m.needsUpdate=true;m.repeat.set(rx,ry);const bm=grain.clone();bm.needsUpdate=true;bm.repeat.set(rx,ry);
+ return new THREE.MeshStandardMaterial({map:m,bumpMap:bm,bumpScale:0.0025,roughness:0.97,metalness:0});}
+const ceilMat=new THREE.MeshStandardMaterial({color:0xf3f2ee,roughness:0.95,emissive:0x8a8a86,emissiveIntensity:0.5});
+
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(W,L),floorMat);floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor);
+const ceil=new THREE.Mesh(new THREE.PlaneGeometry(W,L),ceilMat);ceil.rotation.x=Math.PI/2;ceil.position.y=H;scene.add(ceil);
+const sideMat=wallMatFor(L/0.6,H/0.6),endMat=wallMatFor(W/0.6,H/0.6);
+const DZ0=-L/2+0.35,DZ1=-L/2+1.15,DH=2.05,RX=-3.6,RZ1=-4.9; // passage et petite pièce
+function wall(w,x,z,ry,m){const o=new THREE.Mesh(new THREE.PlaneGeometry(w,H),m);o.position.set(x,H/2,z);o.rotation.y=ry;o.receiveShadow=true;scene.add(o);}
+wall(L,W/2,0,-Math.PI/2,sideMat);
+function seg(z0,z1,y0,y1){const w=z1-z0,h=y1-y0;const m=wallMatFor(w/0.6,h/0.6);m.side=THREE.DoubleSide;const o=new THREE.Mesh(new THREE.PlaneGeometry(w,h),m);o.position.set(-W/2,(y0+y1)/2,(z0+z1)/2);o.rotation.y=Math.PI/2;o.receiveShadow=true;scene.add(o);}
+seg(-L/2,DZ0,0,H);seg(DZ1,L/2,0,H);seg(DZ0,DZ1,DH,H);
+// petite pièce du catalogue
+(()=>{const rw=-W/2-RX,rd=RZ1+L/2,cx=(RX-W/2)/2,cz=(RZ1-L/2)/2;
+ const f=new THREE.Mesh(new THREE.PlaneGeometry(rw,rd),floorMat);f.rotation.x=-Math.PI/2;f.position.set(cx,0,cz);f.receiveShadow=true;scene.add(f);
+ const c=new THREE.Mesh(new THREE.PlaneGeometry(rw,rd),ceilMat);c.rotation.x=Math.PI/2;c.position.set(cx,H,cz);scene.add(c);
+ const w1=new THREE.Mesh(new THREE.PlaneGeometry(rd,H),wallMatFor(rd/0.6,H/0.6));w1.position.set(RX,H/2,cz);w1.rotation.y=Math.PI/2;scene.add(w1);
+ const w2=new THREE.Mesh(new THREE.PlaneGeometry(rw,H),wallMatFor(rw/0.6,H/0.6));w2.position.set(cx,H/2,-L/2);scene.add(w2);
+ const w3=new THREE.Mesh(new THREE.PlaneGeometry(rw,H),wallMatFor(rw/0.6,H/0.6));w3.position.set(cx,H/2,RZ1);w3.rotation.y=Math.PI;scene.add(w3);
+ const pn=new THREE.Mesh(new THREE.PlaneGeometry(0.5,0.5),new THREE.MeshBasicMaterial({color:0xfffaf0}));pn.rotation.x=Math.PI/2;pn.position.set(cx,H-0.005,cz);scene.add(pn);
+ const l=new THREE.PointLight(0xfff4e6,0.85,7,2);l.position.set(cx,H-0.12,cz);scene.add(l);})();
+wall(W,0,-L/2,0,endMat);wall(W,0,L/2,Math.PI,endMat);
+const skMat=new THREE.MeshStandardMaterial({color:0xe6e4dd,roughness:.9});
+{const b=new THREE.Mesh(new THREE.BoxGeometry(0.012,0.07,L),skMat);b.position.set(W/2-0.006,0.035,0);scene.add(b);}
+[[-L/2,DZ0],[DZ1,L/2]].forEach(([a,b2])=>{const b=new THREE.Mesh(new THREE.BoxGeometry(0.012,0.07,b2-a),skMat);b.position.set(-W/2+0.006,0.035,(a+b2)/2);scene.add(b);});
+
+// lumière neutre, sans surexposition du blanc
+scene.add(new THREE.HemisphereLight(0xf6f4ef,0x6a6864,0.38));
+const panelMat=new THREE.MeshBasicMaterial({color:0xfffaf0});
+for(let i=0;i<5;i++){const z=-L/2+1.5+i*3;
+ const p=new THREE.Mesh(new THREE.PlaneGeometry(0.5,0.5),panelMat);p.rotation.x=Math.PI/2;p.position.set(0,H-0.005,z);scene.add(p);
+ const l=new THREE.PointLight(0xfff4e6,0.8,8,2);l.position.set(0,H-0.12,z);if(i%2===0){l.castShadow=true;l.shadow.mapSize.set(512,512);l.shadow.bias=-0.002;}scene.add(l);}
+
+// Le chemin noir : mur de droite puis fond de salle
+const TECH='Encre et aquarelle sur papier Arches';
+const ART=[
+ {f:'art/rc2c.jpg',ir:0.7358,ar:1.3715,t:'Craquer',dim:'19 × 25 cm',pw:0.19,fw:0.30,fh:0.40,z:4.2},
+ {f:'art/rc4c.jpg',ir:0.9067,ar:1.4954,t:'Transition',dim:'17,5 × 25 cm',pw:0.175,fw:0.30,fh:0.40,z:1.6},
+ {f:'art/rc1c.jpg',ir:0.7917,ar:1.3084,t:'Brûler les mauvais',dim:'19 × 25 cm',pw:0.19,fw:0.30,fh:0.40,z:-1.0},
+ {f:'art/rc5c.jpg',ir:0.84,ar:1.3095,t:'Voir différemment',dim:'19 × 25 cm',pw:0.19,fw:0.30,fh:0.40,z:-3.6},
+ {f:'art/rc3c.jpg',ir:1.0,ar:1.1117,t:'Mémoire',dim:'30 × 40 cm',pw:0.36,fw:0.48,fh:0.60,end:true,x:0}];
+function cartel(a){const c=document.createElement('canvas');c.width=600;c.height=300;const g=c.getContext('2d');g.fillStyle='#fbfaf7';g.fillRect(0,0,600,300);
+ g.fillStyle='#1b1b1b';g.font='600 46px Georgia, serif';g.fillText(a.t,36,92);g.font='30px Helvetica, Arial, sans-serif';g.fillStyle='#3a3a3a';g.fillText(a.dim,36,160);g.fillText(TECH,36,210);g.fillStyle='#8a8a8a';g.font='24px Helvetica, Arial, sans-serif';g.fillText('CRt. · Le chemin noir',36,262);
+ const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=8;return t;}
+const tl=new THREE.TextureLoader();
+const frameMat=new THREE.MeshStandardMaterial({color:0x161616,roughness:.55});
+const matMat=new THREE.MeshStandardMaterial({color:0xf7f6f2,roughness:.95});
+const ppGrain=grain.clone();ppGrain.needsUpdate=true;ppGrain.repeat.set(2.2,2.2);
+const ppMat=new THREE.MeshStandardMaterial({color:0xf3f0e8,roughness:.97,bumpMap:ppGrain,bumpScale:0.0012});
+const ppSide=new THREE.MeshStandardMaterial({color:0xe9e5db,roughness:.95});
+const coreMat=new THREE.MeshStandardMaterial({color:0xfffdf7,roughness:.9,side:THREE.DoubleSide});
+const shadeMat=(()=>{const c=document.createElement('canvas');c.width=4;c.height=64;const g=c.getContext('2d');const gr=g.createLinearGradient(0,0,0,64);gr.addColorStop(0,'rgba(0,0,0,0.45)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,4,64);const t=new THREE.CanvasTexture(c);return new THREE.MeshBasicMaterial({map:t,transparent:true,depthWrite:false});})();
+const cy=1.65;const CARTELS=[],PICS=[];
+ART.forEach(a=>{const g=new THREE.Group();const b=0.018;
+ const fr=new THREE.Mesh(new THREE.BoxGeometry(a.fw+2*b,a.fh+2*b,0.03),frameMat);fr.position.z=0.015;fr.castShadow=true;g.add(fr);
+ // passe-partout biseauté
+ const iw=a.pw*a.ir,ih=iw*a.ar,bev=0.0035,zb=0.0306,zf=0.0336;
+ const shp=new THREE.Shape();shp.moveTo(-a.fw/2,-a.fh/2);shp.lineTo(a.fw/2,-a.fh/2);shp.lineTo(a.fw/2,a.fh/2);shp.lineTo(-a.fw/2,a.fh/2);shp.lineTo(-a.fw/2,-a.fh/2);
+ const hx=iw/2+bev,hy=ih/2+bev,hole=new THREE.Path();hole.moveTo(-hx,-hy);hole.lineTo(-hx,hy);hole.lineTo(hx,hy);hole.lineTo(hx,-hy);hole.lineTo(-hx,-hy);shp.holes.push(hole);
+ const pp=new THREE.Mesh(new THREE.ShapeGeometry(shp),ppMat);pp.position.z=zf;g.add(pp);
+ const B=(sx,sy)=>[sx*iw/2,sy*ih/2,zb],F=(sx,sy)=>[sx*hx,sy*hy,zf];
+ [[B(-1,1),B(1,1),F(1,1),F(-1,1)],[B(1,-1),B(-1,-1),F(-1,-1),F(1,-1)],[B(-1,-1),B(-1,1),F(-1,1),F(-1,-1)],[B(1,1),B(1,-1),F(1,-1),F(1,1)]].forEach(q=>{
+  const gg=new THREE.BufferGeometry();gg.setAttribute('position',new THREE.Float32BufferAttribute([...q[0],...q[1],...q[2],...q[0],...q[2],...q[3]],3));gg.computeVertexNormals();g.add(new THREE.Mesh(gg,coreMat));});
+ const tex=tl.load(a.f);tex.encoding=THREE.sRGBEncoding;tex.anisotropy=8;
+ const pic=new THREE.Mesh(new THREE.PlaneGeometry(iw,ih),new THREE.MeshStandardMaterial({map:tex,roughness:.9}));pic.position.z=zb-0.0004;g.add(pic);pic.userData.a=a;PICS.push(pic);
+ const shd=new THREE.Mesh(new THREE.PlaneGeometry(iw,0.018),shadeMat);shd.position.set(0,ih/2-0.009,zb-0.0002);g.add(shd);
+ const cw=0.15,ch=0.075;const ct=new THREE.Mesh(new THREE.BoxGeometry(cw,ch,0.004),[0,0,0,0,new THREE.MeshStandardMaterial({map:cartel(a),roughness:.8}),0].map(m=>m||matMat));
+ ct.position.set(a.fw/2+b+0.08+cw/2,-a.fh/2+ch/2+0.02,0.002);g.add(ct);ct.userData.a=a;CARTELS.push(ct);
+ if(a.end){g.position.set(a.x,cy,-L/2);}else{g.position.set(W/2,cy,a.z);g.rotation.y=-Math.PI/2;}
+ scene.add(g);
+ const sp=new THREE.SpotLight(0xfff4e6,0.9,4,0.45,0.65,2);const tgt=new THREE.Object3D();
+ if(a.end){sp.position.set(a.x,H-0.05,-L/2+1.1);tgt.position.set(a.x,cy,-L/2);}else{sp.position.set(0.3,H-0.05,a.z);tgt.position.set(W/2,cy,a.z);}
+ scene.add(tgt);sp.target=tgt;scene.add(sp);});
+
+// portes : passage ouvert vers la pièce du catalogue, sortie dans la pièce
+const DOOR=[];
+function cardTex(txt){const c=document.createElement('canvas');c.width=400;c.height=200;const g=c.getContext('2d');g.fillStyle='#fbfaf7';g.fillRect(0,0,400,200);g.fillStyle='#1b1b1b';g.font='600 64px Georgia, serif';g.textAlign='center';g.fillText(txt,200,122);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;return t;}
+function makeDoor(x,z,ry,open,label){const dw=0.8,dh=DH;const dg=new THREE.Group();dg.position.set(x,0,z);dg.rotation.y=ry;scene.add(dg);
+ const fMat=new THREE.MeshStandardMaterial({color:0x2b2b2b,roughness:.6}),dMat=new THREE.MeshStandardMaterial({color:0x3c3c3c,roughness:.75});const t=0.05;
+ [[-dw/2-t/2,dh/2,t,dh+t],[dw/2+t/2,dh/2,t,dh+t],[0,dh+t/2,dw+2*t,t]].forEach(([x,y,w,h])=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,0.06),fMat);m.position.set(x,y,0);dg.add(m);});
+ const hinge=new THREE.Group();hinge.position.set(-dw/2,0,open?-0.03:0.015);dg.add(hinge);
+ const leaf=new THREE.Mesh(new THREE.BoxGeometry(dw,dh,0.03),dMat);leaf.position.set(dw/2,dh/2,0);hinge.add(leaf);
+ if(open)hinge.rotation.y=Math.PI/2; else DOOR.push(leaf);
+ const hMat=new THREE.MeshStandardMaterial({color:0xbdbdbd,roughness:.3,metalness:.8});
+ const hd=new THREE.Mesh(new THREE.BoxGeometry(0.14,0.022,0.03),hMat);hd.position.set(dw-0.12,1.02,0.035);hinge.add(hd);if(!open)DOOR.push(hd);
+ if(label){const card=new THREE.Mesh(new THREE.BoxGeometry(0.22,0.11,0.004),[0,0,0,0,new THREE.MeshStandardMaterial({map:cardTex(label),roughness:.8}),0].map(m=>m||matMat));
+  if(open)card.position.set(0,2.27,0.033);else{card.position.set(0,1.62,0.05);DOOR.push(card);}dg.add(card);}}
+makeDoor(-W/2,(DZ0+DZ1)/2,Math.PI/2,true,'Sortie');
+makeDoor((RX-W/2)/2+0.35,RZ1,Math.PI,false,'Sortie');
+
+// étagère et livre d'or, à côté de la porte de sortie
+const GB=[];
+(()=>{const x=(RX-W/2)/2+0.35-0.95,z=RZ1;const wood=new THREE.MeshStandardMaterial({color:0x1e1d1b,roughness:.55});
+ const sh=new THREE.Mesh(new THREE.BoxGeometry(0.55,0.025,0.24),wood);sh.position.set(x,1.05,z-0.12);sh.castShadow=true;scene.add(sh);
+ [-0.2,0.2].forEach(d=>{const b=new THREE.Mesh(new THREE.BoxGeometry(0.02,0.12,0.18),wood);b.position.set(x+d,0.98,z-0.09);scene.add(b);});
+ const c=document.createElement('canvas');c.width=512;c.height=360;const g=c.getContext('2d');g.fillStyle='#f6f3ea';g.fillRect(0,0,512,360);g.fillStyle='#d9d3c4';g.fillRect(254,0,4,360);
+ g.fillStyle='#1d1d1d';g.font='italic 40px Georgia, serif';g.fillText('Livre d’or',30,70);g.font='18px Georgia, serif';g.fillStyle='#5a5a5a';g.fillText('Beyond Black',30,104);
+ g.strokeStyle='#c9c2b2';g.lineWidth=1.5;for(let i=0;i<9;i++){g.beginPath();g.moveTo(286,60+i*32);g.lineTo(486,60+i*32);g.stroke();}
+ g.strokeStyle='#3a3a3a';g.lineWidth=2;g.beginPath();g.moveTo(290,88);g.bezierCurveTo(330,70,360,104,400,84);g.stroke();
+ const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=8;
+ const cover=new THREE.Mesh(new THREE.BoxGeometry(0.4,0.012,0.28),new THREE.MeshStandardMaterial({color:0x2a2724,roughness:.7}));cover.position.set(x,1.069,z-0.14);scene.add(cover);
+ const pages=new THREE.Mesh(new THREE.PlaneGeometry(0.38,0.267),new THREE.MeshStandardMaterial({map:t,roughness:.9}));pages.rotation.x=-Math.PI/2;pages.position.set(x,1.0765,z-0.14);
+ pages.rotation.z=Math.PI;scene.add(pages);GB.push(pages,cover);
+ const pen=new THREE.Mesh(new THREE.CylinderGeometry(0.004,0.004,0.14,8),new THREE.MeshStandardMaterial({color:0x111111,roughness:.4}));pen.rotation.z=Math.PI/2;pen.rotation.y=0.4;pen.position.set(x+0.12,1.082,z-0.06);scene.add(pen);GB.push(pen);
+ const sp=new THREE.SpotLight(0xfff4e6,0.7,3.5,0.4,0.6,2);sp.position.set(x,H-0.05,z-0.9);const tg=new THREE.Object3D();tg.position.set(x,1.06,z-0.12);scene.add(tg);sp.target=tg;scene.add(sp);})();
+
+// pupitre et catalogue
+const CAT=[];
+const CAT_LINK='https://linktr.ee/qr/b8b30b2b-31df-4f47-bb0b-95d1b9ca1231';
+const CAT_PAGES=['01','03','05','07','08','09','10','11','12','14','15','16'].map(n=>'cat/p-'+n+'.jpg');
+(()=>{const x=-2.75,z=(DZ0+DZ1)/2;const wood=new THREE.MeshStandardMaterial({color:0x1e1d1b,roughness:.55});
+ const base=new THREE.Mesh(new THREE.BoxGeometry(0.42,0.03,0.42),wood);base.position.set(x,0.015,z);scene.add(base);
+ const col=new THREE.Mesh(new THREE.BoxGeometry(0.07,0.98,0.07),wood);col.position.set(x,0.5,z);col.castShadow=true;scene.add(col);
+ const top=new THREE.Group();top.position.set(x,1.02,z);top.rotation.z=-0.36;scene.add(top);
+ const board=new THREE.Mesh(new THREE.BoxGeometry(0.36,0.025,0.46),wood);board.castShadow=true;top.add(board);
+ const lip=new THREE.Mesh(new THREE.BoxGeometry(0.02,0.03,0.46),wood);lip.position.set(0.17,0.025,0);top.add(lip);
+ const bk=new THREE.Group();bk.position.set(-0.01,0.0165,0);bk.rotation.y=Math.PI/2;top.add(bk);
+ const body=new THREE.Mesh(new THREE.BoxGeometry(0.21,0.008,0.293),new THREE.MeshStandardMaterial({color:0xf4f2ec,roughness:.9}));body.position.y=0.004;bk.add(body);
+ const ct=tl.load(CAT_PAGES[0]);ct.encoding=THREE.sRGBEncoding;ct.anisotropy=8;
+ const cover=new THREE.Mesh(new THREE.PlaneGeometry(0.21,0.293),new THREE.MeshStandardMaterial({map:ct,roughness:.85}));cover.rotation.x=-Math.PI/2;cover.position.y=0.0085;bk.add(cover);
+ CAT.push(cover,body);
+ const sp=new THREE.SpotLight(0xfff4e6,0.8,3,0.5,0.6,2);sp.position.set(x+0.6,H-0.05,z);const tg=new THREE.Object3D();tg.position.set(x,1.02,z);scene.add(tg);sp.target=tg;scene.add(sp);})();
+
+// affiche des tirages au-dessus du pupitre
+(()=>{const T='Tirage d’art · 15 × 20 cm';const items=[['Craquer','art/rc2c.jpg',T,'40 €'],['Transition','art/rc4c.jpg',T,'40 €'],['Brûler les mauvais','art/rc1c.jpg',T,'40 €'],['Voir différemment','art/rc5c.jpg',T,'40 €'],['Mémoire','art/rc3c.jpg',T,'40 €'],null,['Brûler les mauvais','art/rc1c.jpg','Épreuve d’artiste · 20 × 25 cm','85 €'],['Mémoire','art/rc3c.jpg','Tirage déclassé','30 €']];
+ const Wc=1000,Hc=1414,c=document.createElement('canvas');c.width=Wc;c.height=Hc;const g=c.getContext('2d');
+ const tex=new THREE.CanvasTexture(c);tex.encoding=THREE.sRGBEncoding;tex.anisotropy=8;
+ const a={f:'',t:'Le chemin noir · tirages d’art'};
+ function draw(imgs){g.fillStyle='#fbfaf7';g.fillRect(0,0,Wc,Hc);g.fillStyle='#1b1b1b';g.textBaseline='alphabetic';
+  g.font='600 78px Georgia, serif';g.fillText('Le chemin noir',70,140);
+  g.font='italic 400 40px Georgia, serif';g.fillStyle='#4a4a4a';g.fillText('Tirages d’art',72,200);
+  g.fillStyle='#1b1b1b';g.fillRect(70,232,860,3);
+  let y=258;const rh=132;items.forEach((it,i)=>{if(!it){g.font='italic 400 32px Georgia, serif';g.fillStyle='#4a4a4a';g.fillText('Éditions particulières',70,y+52);y+=72;return;}
+   const [t,,sub,pr]=it;const im=imgs&&imgs[i];
+   if(im){const th=108,tw=th*im.width/im.height;g.drawImage(im,70+(90-tw)/2,y+10,tw,th);}
+   g.fillStyle='#1b1b1b';g.font='500 42px Georgia, serif';g.fillText(t,200,y+62);
+   g.font='27px Helvetica, Arial, sans-serif';g.fillStyle='#6a6a6a';g.fillText(sub,200,y+102);
+   g.font='600 46px Georgia, serif';g.fillStyle='#1b1b1b';g.fillText(pr,930-g.measureText(pr).width,y+80);
+   g.fillStyle='#d8d4ca';g.fillRect(70,y+rh-6,860,2);y+=rh;});
+  g.font='26px Helvetica, Arial, sans-serif';g.fillStyle='#6a6a6a';g.fillText('Originaux non présentés ici.',70,Hc-92);
+  g.font='600 34px Georgia, serif';g.fillStyle='#1b1b1b';g.fillText('CRt. — Clem-Ancre',70,Hc-46);
+  tex.needsUpdate=true;try{a.f=c.toDataURL('image/jpeg',0.9);}catch(e){}}
+ draw(null);
+ Promise.all(items.map(it=>new Promise(r=>{if(!it)return r(null);const im=new Image();im.onload=()=>r(im);im.onerror=()=>r(null);im.src=it[1];}))).then(draw);
+ const pw=0.5,ph=pw*Hc/Wc;const grp=new THREE.Group();grp.position.set(RX+0.003,1.78,(DZ0+DZ1)/2);grp.rotation.y=Math.PI/2;scene.add(grp);
+ const fr=new THREE.Mesh(new THREE.BoxGeometry(pw+0.024,ph+0.024,0.02),frameMat);fr.position.z=0.01;grp.add(fr);
+ const m=new THREE.Mesh(new THREE.PlaneGeometry(pw,ph),new THREE.MeshStandardMaterial({map:tex,roughness:.85}));m.position.z=0.021;grp.add(m);
+ m.userData.a=a;PICS.push(m);
+ const sp=new THREE.SpotLight(0xfff4e6,0.7,3.5,0.45,0.6,2);sp.position.set(RX+1.0,H-0.05,(DZ0+DZ1)/2);const tg=new THREE.Object3D();tg.position.set(RX,1.78,(DZ0+DZ1)/2);scene.add(tg);sp.target=tg;scene.add(sp);})();
+
+// titre sur le mur de gauche
+var TITLE_Z=3.9;
+(()=>{const c=document.createElement('canvas');c.width=2400;c.height=240;const g=c.getContext('2d');g.fillStyle='#1d1d1d';g.font='500 150px Georgia, serif';g.textBaseline='middle';g.fillText('Beyond Black : le chemin noir',20,125);
+ const tx=new THREE.CanvasTexture(c);tx.encoding=THREE.sRGBEncoding;tx.anisotropy=8;
+ const m=new THREE.Mesh(new THREE.PlaneGeometry(2.0,0.2),new THREE.MeshStandardMaterial({map:tx,transparent:true,roughness:.9}));
+ m.position.set(-W/2+0.003,1.75,TITLE_Z);m.rotation.y=Math.PI/2;scene.add(m);window.TITLE_M=m;})();
+
+
+// panneaux de texte (mur)
+const TEXTS=[];
+function textPanel(wm,blocks,opt){opt=opt||{};const PX=1000,W2=Math.round(wm*PX),cols=opt.cols||1,gap=opt.gap||70,cw=(W2-gap*(cols-1))/cols;const c=document.createElement('canvas');const g=c.getContext('2d');
+ const lines=[];blocks.forEach(b=>{g.font=b.font;const words=b.text.split(' ');let cur='';words.forEach(w=>{const t=cur?cur+' '+w:w;if(g.measureText(t).width>cw&&cur){lines.push({t:cur,b,h:b.lh});cur=w;}else cur=t;});lines.push({t:cur,b,h:b.lh});lines.push({gap:true,h:b.after||0});});
+ while(lines.length&&lines[lines.length-1].gap)lines.pop();
+ const total=lines.reduce((s,l)=>s+l.h,0),target=total/cols;const colsL=[[]];let acc=0;
+ lines.forEach(l=>{if(colsL.length<cols&&!l.gap&&acc+l.h/2>target){colsL.push([]);acc=0;}if(l.gap&&!colsL[colsL.length-1].length)return;colsL[colsL.length-1].push(l);acc+=l.h;});
+ const H2=Math.max(...colsL.map(cl=>cl.reduce((s,l)=>s+l.h,0)));c.width=W2;c.height=Math.ceil(H2)+10;
+ colsL.forEach((cl,i)=>{let y=0;const x=i*(cw+gap);cl.forEach(l=>{if(l.gap){y+=l.h;return;}g.font=l.b.font;g.fillStyle=l.b.color||'#1d1d1d';g.textBaseline='top';g.fillText(l.t,x,y);y+=l.h;});});
+ const tx=new THREE.CanvasTexture(c);tx.encoding=THREE.sRGBEncoding;tx.anisotropy=8;
+ return new THREE.Mesh(new THREE.PlaneGeometry(wm,c.height/PX),new THREE.MeshStandardMaterial({map:tx,transparent:true,roughness:.9}));}
+const BODY='400 25px Georgia, serif',BL=38;
+// description de l'exposition, sous le titre (mur de gauche)
+(()=>{const P=["Dans notre société actuelle, la santé mentale prend une place de plus en plus importante : dans le débat public, les relations amicales, sociales, familiales, intimes. Pourtant, certains aspects restent tabous.","Il est admis de parler d’un passage à vide, de moments de doutes, ou d’idées noires. Il est aisé de donner les meilleurs conseils à celui qui traverse cette épreuve, d’orienter un ami dans les moments de doute, le faire rire quand une simple pensée se matérialise de manière trop brutale. La dépression, elle, n’est pas tolérée. C’est un non-dit qui ronge l’intérieur de l’être au plus profond, une lame insidieuse qui racle les moindres recoins de l’âme.","Dans cette plongée sans scaphandre, l’obscurité devient une pression toujours plus intense, une main griffue qui s’accroche, qui cherche à vous rabaisser et à vous enfoncer toujours plus loin dans le noir.","Dans ces moments, ceux qui comptent vraiment se distinguent. Ce sont ceux qui sont là d’une manière qui serait insignifiante pour les autres. Ils écoutent, ils acceptent la noirceur que vous ne pouvez plus contenir. Et, comme autant d’étincelles, chacun de ces gestes vous fait lever les yeux, et vous accompagne tout au long du chemin noir, jusqu’à prendre le dessus sur l’obscurité."];
+ const m=textPanel(1.8,P.map(t=>({text:t,font:BODY,lh:BL,after:16})),{cols:2});const h=m.geometry.parameters.height;
+ m.position.set(-W/2+0.003,1.6-h/2,TITLE_Z+0.083);m.rotation.y=Math.PI/2;scene.add(m);const tx={h:'Beyond Black : le chemin noir',p:P};m.userData.tx=tx;TEXTS.push(m);if(window.TITLE_M){TITLE_M.userData.tx=tx;TEXTS.push(TITLE_M);}})();
+// mur du fond, derrière le point d'apparition : logo et portfolio
+(()=>{const z=L/2-0.003;
+ const lt=tl.load('art/logo.png');lt.encoding=THREE.sRGBEncoding;lt.anisotropy=8;
+ const logo=new THREE.Mesh(new THREE.PlaneGeometry(0.3,0.3),new THREE.MeshStandardMaterial({map:lt,transparent:true,roughness:.9}));logo.position.set(0,1.98,z);logo.rotation.y=Math.PI;scene.add(logo);
+ const hd=textPanel(1.5,[{text:'Clem-Ancre',font:'500 64px Georgia, serif',lh:76,after:4},{text:'Sonder le vivant',font:'italic 400 32px Georgia, serif',lh:44,color:'#4a4a4a'}]);const hh=hd.geometry.parameters.height;hd.position.set(0,1.8-hh/2,z);hd.rotation.y=Math.PI;scene.add(hd);
+ const P=[...["Le dessin est, chez Clément Roulet, une façon d’habiter le monde. Un geste direct, instinctif, qui lui permet de traduire ce qu’il ressent, ce qu’il perçoit, sans détour ni filtre.","Crayon en main, il capte des émotions brutes, des visages croisés, des pensées parfois obscures qu’il couche sur le papier. Il cherche à faire émerger une vérité intérieure. Chaque dessin naît d’une urgence, celle de poser ce qui l’habite, et trouve sa forme dans des carnets peuplés de silhouettes, d’instants saisis, de visions personnelles.","Son attention au choix des matériaux fait pleinement partie de sa démarche. Il privilégie des papiers français, durables, fabriqués avec soin, sur lesquels il peut laisser se déployer ses lignes avec précision.","Clément Roulet explore sans crainte les zones sombres, dans une quête toujours guidée par un désir de compréhension et d’ouverture. À travers ses dessins, il offre un espace d’identification, un terrain de résonance émotionnelle où chacun peut se reconnaître, parfois à son insu."].map(t=>({text:t,font:BODY,lh:BL,after:16}))];
+ const m=textPanel(1.5,P,{cols:2});const h=m.geometry.parameters.height;m.position.set(0,1.8-hh-0.03-h/2,z);const tx={h:'Clem-Ancre',s:'Sonder le vivant',p:P.map(b=>b.text)};m.userData.tx=tx;hd.userData.tx=tx;TEXTS.push(m,hd);m.rotation.y=Math.PI;scene.add(m);
+ const sp=new THREE.SpotLight(0xfff4e6,0.7,4,0.7,0.7,2);sp.position.set(0,H-0.05,L/2-1.0);const t=new THREE.Object3D();t.position.set(0,1.4,L/2);scene.add(t);sp.target=t;scene.add(sp);})();
+
+// audio: footsteps on polished concrete (synthesised)
+let ac=null,rev=null;
+function initAudio(){if(ac)return;ac=new (window.AudioContext||window.webkitAudioContext)();
+ const len=ac.sampleRate*0.5,ir=ac.createBuffer(2,len,ac.sampleRate);
+ for(let ch=0;ch<2;ch++){const d=ir.getChannelData(ch);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,4.5)*0.5;}
+ rev=ac.createConvolver();rev.buffer=ir;const rg=ac.createGain();rg.gain.value=0.07;rev.connect(rg).connect(ac.destination);}
+function step(intensity){if(!ac)return;const t=ac.currentTime;
+ const n=Math.floor(ac.sampleRate*0.09),b=ac.createBuffer(1,n,ac.sampleRate),d=b.getChannelData(0);
+ for(let i=0;i<n;i++){const e=i<ac.sampleRate*0.004?i/(ac.sampleRate*0.004):Math.exp(-(i-ac.sampleRate*0.004)/(ac.sampleRate*0.012));d[i]=(Math.random()*2-1)*e;}
+ const s=ac.createBufferSource();s.buffer=b;s.playbackRate.value=0.9+Math.random()*0.2;
+ const hp=ac.createBiquadFilter();hp.type='highpass';hp.frequency.value=110;
+ const pk=ac.createBiquadFilter();pk.type='lowpass';pk.frequency.value=750+Math.random()*150;pk.Q.value=0.7;
+ const thud=ac.createOscillator();thud.frequency.setValueAtTime(105,t);thud.frequency.exponentialRampToValueAtTime(48,t+0.07);
+ const tg=ac.createGain();tg.gain.setValueAtTime(0.5*intensity,t);tg.gain.exponentialRampToValueAtTime(0.001,t+0.08);
+ const g=ac.createGain();g.gain.value=0.75*intensity;
+ s.connect(hp).connect(pk).connect(g);thud.connect(tg);
+ [g,tg].forEach(x=>{x.connect(ac.destination);x.connect(rev);});
+ s.start(t);thud.start(t);thud.stop(t+0.1);}
+
+// input
+const keys={};
+addEventListener('keydown',e=>{keys[e.code]=true;});
+addEventListener('keyup',e=>{keys[e.code]=false;});
+const ov=document.getElementById('ov');
+let locked=false;
+// regard : verrouillage du pointeur si le navigateur l'autorise, sinon cliquer-glisser
+let dragMode=false,downX=0,downY=0,dragged=false,mx=innerWidth/2,my=innerHeight/2;
+function useDrag(){if(dragMode)return;dragMode=true;ov.style.display='none';renderer.domElement.style.cursor='grab';cross.style.display='none';document.getElementById('hud').textContent='';}
+function tryLock(){if(dragMode||touch)return;const el=renderer.domElement;let p;try{p=el.requestPointerLock&&el.requestPointerLock();}catch(e){useDrag();return;}if(!el.requestPointerLock){useDrag();return;}if(p&&p.catch)p.catch(()=>useDrag());setTimeout(()=>{if(!locked)useDrag();},500);}
+function afterClose(relock){if(dragMode)return;if(relock){tryLock();}else{ov.style.display='flex';document.getElementById('go').textContent='Reprendre';}}
+document.addEventListener('pointerlockerror',()=>useDrag());
+function enter(){initAudio();if(ac.state==='suspended')ac.resume();ov.style.display='none';if(!touch){tryLock();}else{document.getElementById('stick').style.display='block';}}
+document.getElementById('go').addEventListener('click',e=>{e.stopPropagation();enter();});
+ov.addEventListener('click',enter);
+document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===renderer.domElement;if(!locked&&!touch&&!viewing&&!dragMode){ov.style.display='flex';document.getElementById('go').textContent='Reprendre';}});
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;if(locked){yaw-=e.movementX*0.0022;pitch-=e.movementY*0.0022;}else if(dragMode&&(e.buttons&1)&&!viewing){if(Math.abs(e.clientX-downX)+Math.abs(e.clientY-downY)>4)dragged=true;yaw-=e.movementX*0.004;pitch-=e.movementY*0.004;}else return;pitch=Math.max(-1.35,Math.min(1.35,pitch));});
+renderer.domElement.addEventListener('mousedown',e=>{downX=e.clientX;downY=e.clientY;dragged=false;if(dragMode)renderer.domElement.style.cursor='grabbing';});
+addEventListener('mouseup',()=>{if(dragMode)renderer.domElement.style.cursor='grab';});
+// touch
+let stickId=null,lookId=null,sx=0,sy=0,mvx=0,mvy=0,lx=0,ly=0;
+const stick=document.getElementById('stick'),knob=document.getElementById('knob');
+addEventListener('touchstart',e=>{for(const t of e.changedTouches){if(t.clientX<innerWidth/2&&stickId===null){stickId=t.identifier;const r=stick.getBoundingClientRect();sx=r.left+r.width/2;sy=r.top+r.height/2;}else if(lookId===null){lookId=t.identifier;lx=t.clientX;ly=t.clientY;}}},{passive:true});
+addEventListener('touchmove',e=>{for(const t of e.changedTouches){if(t.identifier===stickId){let dx=t.clientX-sx,dy=t.clientY-sy;const m=Math.hypot(dx,dy),mx=45;if(m>mx){dx*=mx/m;dy*=mx/m;}mvx=dx/mx;mvy=dy/mx;knob.style.transform=`translate(${dx}px,${dy}px)`;}else if(t.identifier===lookId){yaw-=(t.clientX-lx)*0.005;pitch-=(t.clientY-ly)*0.005;pitch=Math.max(-1.35,Math.min(1.35,pitch));lx=t.clientX;ly=t.clientY;}}},{passive:true});
+addEventListener('touchend',e=>{for(const t of e.changedTouches){if(t.identifier===stickId){stickId=null;mvx=mvy=0;knob.style.transform='';}if(t.identifier===lookId)lookId=null;}});
+
+addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+
+// cartels cliquables
+var viewing=false;const ray=new THREE.Raycaster();ray.far=3.2;const zoom=document.getElementById('zoom'),cross=document.getElementById('cross');
+function pick(nx,ny){ray.setFromCamera({x:nx,y:ny},cam);const h=ray.intersectObjects(CARTELS);return h.length?h[0].object.userData.a:null;}
+const imgv=document.getElementById('imgv'),txv=document.getElementById('txv');
+function pickTxt(nx,ny){ray.setFromCamera({x:nx,y:ny},cam);const h=ray.intersectObjects(TEXTS);return h.length?h[0].object.userData.tx:null;}
+function openTxt(t){viewing=true;document.getElementById('txh').textContent=t.h;const sEl=document.getElementById('txs');sEl.textContent=t.s||'';sEl.style.display=t.s?'block':'none';const b=document.getElementById('txb');b.innerHTML='';t.p.forEach(x=>{const q=document.createElement('p');q.style.margin='0 0 12px';q.textContent=x;b.appendChild(q);});txv.style.display='flex';if(document.pointerLockElement)document.exitPointerLock();}
+function closeTxt(relock){txv.style.display='none';if(!touch){afterClose(relock);}setTimeout(()=>{viewing=false;},300);}
+txv.addEventListener('click',e=>{e.stopPropagation();closeTxt(true);});
+addEventListener('keydown',e=>{if(viewing&&e.code==='Escape'&&txv.style.display==='flex')closeTxt(false);});
+function pickPic(nx,ny){ray.setFromCamera({x:nx,y:ny},cam);const h=ray.intersectObjects(PICS);return h.length?h[0].object.userData.a:null;}
+function openImg(a){viewing=true;document.getElementById('imgi').src=a.f;document.getElementById('imgc').textContent=a.t+' · clic ou Échap pour fermer';imgv.style.display='flex';if(document.pointerLockElement)document.exitPointerLock();}
+function closeImg(relock){imgv.style.display='none';if(!touch){afterClose(relock);}setTimeout(()=>{viewing=false;},300);}
+imgv.addEventListener('click',e=>{e.stopPropagation();closeImg(true);});
+addEventListener('keydown',e=>{if(viewing&&e.code==='Escape'&&imgv.style.display==='flex')closeImg(false);});
+function openZoom(a){viewing=true;document.getElementById('zt').textContent=a.t;document.getElementById('zd').textContent=a.dim;document.getElementById('zm').textContent=TECH;zoom.style.display='flex';if(document.pointerLockElement)document.exitPointerLock();}
+function closeZoom(relock){zoom.style.display='none';if(!touch){afterClose(relock);}setTimeout(()=>{viewing=false;},300);}
+function pickDoor(nx,ny){ray.setFromCamera({x:nx,y:ny},cam);return ray.intersectObjects(DOOR).length>0;}
+const bye=document.getElementById('bye');
+function leave(){viewing=true;bye.style.display='flex';if(document.pointerLockElement)document.exitPointerLock();document.getElementById('stick').style.display='none';}
+document.getElementById('again').addEventListener('click',e=>{e.stopPropagation();bye.style.display='none';px=0;pz=L/2-0.8;yaw=0;pitch=0;viewing=false;ov.style.display='flex';document.getElementById('go').textContent='Entrer';});
+renderer.domElement.addEventListener('click',e=>{if(viewing)return;let nx=0,ny=0;if(!locked){if(!touch&&!dragMode)return;if(dragMode&&dragged)return;nx=e.clientX/innerWidth*2-1;ny=-(e.clientY/innerHeight)*2+1;}const a=pick(nx,ny);if(a){openZoom(a);return;}const pa=pickPic(nx,ny);if(pa){openImg(pa);return;}const tt=pickTxt(nx,ny);if(tt){openTxt(tt);return;}if(pickCat(nx,ny)){openCat();return;}if(pickGB(nx,ny)){openGB();return;}if(pickDoor(nx,ny))leave();});
+zoom.addEventListener('click',e=>{e.stopPropagation();closeZoom(true);});
+addEventListener('keydown',e=>{if(viewing&&e.code==='Escape'&&zoom.style.display==='flex')closeZoom(false);});
+function inside(x,z){const LX=-2.75,LZ=(DZ0+DZ1)/2;if(Math.hypot(x-LX,z-LZ)<0.3)return false;
+ if(x>=-W/2+R&&x<=W/2-R&&z>=-L/2+R&&z<=L/2-R)return true;
+ if(x>=-W/2-R-0.05&&x<=-W/2+R+0.05&&z>=DZ0+0.12&&z<=DZ1-0.12)return true;
+ if(x>=RX+R&&x<=-W/2-R&&z>=-L/2+R&&z<=RZ1-R)return true;return false;}
+// visionneuse du catalogue
+const catv=document.getElementById('catv');let ci=0;
+function showCat(){const last=ci===CAT_PAGES.length-1;catv.classList.toggle('links',ci===CAT_PAGES.length-2);document.getElementById('cati').src=CAT_PAGES[ci];document.getElementById('catn').textContent=(ci+1)+' / '+CAT_PAGES.length+(last?' · clic sur la page pour ouvrir le lien':ci===CAT_PAGES.length-2?' · Art Confidential et Instagram cliquables':'');document.getElementById('catl').href=last?CAT_LINK:'#';document.getElementById('cati').title=last?'Ouvrir le lien':'';}
+function pickCat(nx,ny){ray.setFromCamera({x:nx,y:ny},cam);return ray.intersectObjects(CAT).length>0;}
+function openCat(){viewing=true;ci=0;showCat();catv.style.display='flex';if(document.pointerLockElement)document.exitPointerLock();}
+function closeCat(relock){catv.style.display='none';if(!touch){afterClose(relock);}setTimeout(()=>{viewing=false;},300);}
+document.getElementById('catp').addEventListener('click',e=>{e.stopPropagation();ci=(ci+CAT_PAGES.length-1)%CAT_PAGES.length;showCat();});
+document.getElementById('catn2').addEventListener('click',e=>{e.stopPropagation();ci=(ci+1)%CAT_PAGES.length;showCat();});
+document.getElementById('catl').addEventListener('click',e=>{e.stopPropagation();if(ci===CAT_PAGES.length-1)return;e.preventDefault();ci=ci+1;showCat();});
+document.querySelectorAll('#catv .hs').forEach(a=>a.addEventListener('click',e=>e.stopPropagation()));
+document.getElementById('catx').addEventListener('click',e=>{e.stopPropagation();closeCat(true);});
+catv.addEventListener('click',()=>closeCat(true));
+addEventListener('keydown',e=>{if(catv.style.display!=='flex')return;if(e.code==='ArrowRight'){ci=(ci+1)%CAT_PAGES.length;showCat();}if(e.code==='ArrowLeft'){ci=(ci+CAT_PAGES.length-1)%CAT_PAGES.length;showCat();}if(e.code==='Escape')closeCat(false);});
+CAT_PAGES.forEach(u=>{const i=new Image();i.src=u;});
+// livre d'or (db partagé : chacun signe une fois et peut modifier son mot)
+const gb=document.getElementById('gb');let gbDb=null,gbUid=null,gbSub=null,gbMine=null;
+function pickGB(nx,ny){ray.setFromCamera({x:nx,y:ny},cam);return ray.intersectObjects(GB).length>0;}
+function gbRender(docs){const l=document.getElementById('gbl');l.innerHTML='';if(!docs.length){const p=document.createElement('p');p.style.cssText='font:italic 15px Georgia,serif;color:#8a8a8a;margin:16px 0 0';p.textContent='Personne n’a encore signé. Soyez le premier.';l.appendChild(p);return;}
+ docs.forEach(d=>{const v=d.data()||{};const e=document.createElement('div');e.style.cssText='padding:14px 0;border-bottom:1px solid #e6e2d8';const t=document.createElement('p');t.style.cssText='font:16px/1.55 Georgia,serif;margin:0 0 6px;white-space:pre-wrap';t.textContent=String(v.text||'');const n=document.createElement('p');n.style.cssText='font:13px Helvetica,Arial,sans-serif;color:#7a7a7a;margin:0';const dt=v.t?new Date(v.t).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}):'';n.textContent='— '+(String(v.name||'').trim()||'Anonyme')+(dt?' · '+dt:'');e.appendChild(t);e.appendChild(n);l.appendChild(e);});}
+// livre d'or sur Supabase (lecture et signature publiques, sans compte)
+const SB_URL='https://kdsgzfkmmthqrdmzfekz.supabase.co',SB_KEY='sb_publishable_Htm27G81mGcWfOI6lBQQZg_I056rC_y';
+const sbH={apikey:SB_KEY,'Content-Type':'application/json'};
+let gbLoaded=false,gbSigned=false;
+async function gbLoad(){try{const r=await fetch(SB_URL+'/rest/v1/livre_dor?select=name,message,created_at&order=created_at.desc&limit=200',{headers:sbH});if(!r.ok)throw r.status;const rows=await r.json();
+ gbRender(rows.map(x=>({data:()=>({name:x.name,text:x.message,t:Date.parse(x.created_at)})})));}catch(e){document.getElementById('gbm').textContent='Lecture impossible pour le moment.';}}
+async function gbInit(){if(gbLoaded)return;gbLoaded=true;try{gbSigned=localStorage.getItem('gb_signed')==='1';}catch(e){}if(gbSigned){document.getElementById('gbs').textContent='Signer à nouveau';}gbLoad();}
+document.getElementById('gbs').addEventListener('click',async e=>{e.stopPropagation();const txt=document.getElementById('gbt').value.trim();const m=document.getElementById('gbm');if(!txt){m.textContent='Écrivez quelques mots avant de signer.';return;}
+ const btn=document.getElementById('gbs');btn.disabled=true;m.textContent='Enregistrement…';
+ try{const r=await fetch(SB_URL+'/rest/v1/livre_dor',{method:'POST',headers:Object.assign({Prefer:'return=minimal'},sbH),body:JSON.stringify({name:document.getElementById('gbn').value.trim().slice(0,60)||null,message:txt.slice(0,600)})});if(!r.ok)throw r.status;
+  m.textContent='Merci, votre mot est enregistré.';document.getElementById('gbt').value='';try{localStorage.setItem('gb_signed','1');}catch(e){}gbLoad();}
+ catch(err){m.textContent='Enregistrement impossible, réessayez plus tard.';}
+ setTimeout(()=>{btn.disabled=false;},4000);});
+function openGB(){viewing=true;gb.style.display='flex';gbInit();if(document.pointerLockElement)document.exitPointerLock();}
+function closeGB(relock){gb.style.display='none';if(!touch){afterClose(relock);}setTimeout(()=>{viewing=false;},300);}
+document.getElementById('gbx').addEventListener('click',e=>{e.stopPropagation();closeGB(true);});
+gb.addEventListener('click',e=>{if(e.target===gb)closeGB(true);});
+addEventListener('keydown',e=>{if(gb.style.display==='flex'&&e.code==='Escape')closeGB(false);});
+const hud=document.getElementById('hud');
+let last=performance.now(),dist=0,bob=0;
+function loop(now){const dt=Math.min(0.05,(now-last)/1000);last=now;
+ let f=0,s=0;
+ if(keys.KeyW||keys.KeyZ||keys.ArrowUp)f+=1;if(keys.KeyS||keys.ArrowDown)f-=1;
+ if(keys.KeyA||keys.KeyQ||keys.ArrowLeft)s-=1;if(keys.KeyD||keys.ArrowRight)s+=1;
+ f-=mvy;s+=mvx;if(viewing){f=0;s=0;}
+ const run=keys.ShiftLeft||keys.ShiftRight;const sp=(run?2.2:1.35);
+ const m=Math.hypot(f,s);let moved=0;
+ if(m>0.05){const k=Math.min(1,m)/m;f*=k;s*=k;
+  const dx=(-Math.sin(yaw)*f+Math.cos(yaw)*s)*sp*dt,dz=(-Math.cos(yaw)*f-Math.sin(yaw)*s)*sp*dt;
+  let nx=px+dx,nz=pz+dz;if(!inside(nx,nz)){if(inside(nx,pz))nz=pz;else if(inside(px,nz))nx=px;else{nx=px;nz=pz;}}
+  moved=Math.hypot(nx-px,nz-pz);px=nx;pz=nz;}
+ dist+=moved;bob+=moved*Math.PI/0.72;
+ if(dist>=0.72){dist-=0.72;step(run?1:0.8);}
+ cam.position.set(px,EYE+Math.abs(Math.sin(bob))*0.025*(moved>0?1:0.6),pz);
+ cam.rotation.set(pitch,yaw,0);
+ const anyHot=(x,y)=>!!pick(x,y)||!!pickPic(x,y)||!!pickTxt(x,y)||pickCat(x,y)||pickGB(x,y)||pickDoor(x,y);
+ if(locked){cam.updateMatrixWorld();cross.classList.toggle('hot',anyHot(0,0));}
+ else if(dragMode&&!viewing&&!(dragged)){cam.updateMatrixWorld();renderer.domElement.style.cursor=anyHot(mx/innerWidth*2-1,-(my/innerHeight)*2+1)?'pointer':'grab';}
+ hud.textContent=`Position ${(L/2-pz).toFixed(1)} m / ${L} m`;
+ renderer.render(scene,cam);requestAnimationFrame(loop);}
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
