@@ -26,16 +26,20 @@ canvas{display:block}
 #zc .s{color:#8a8a8a;font-size:14px;margin-top:22px}
 #zc .x{color:#9a9a9a;font-size:12px;margin-top:14px}
 #catv .hs{display:none;border-radius:6px;outline:2px solid transparent;transition:outline-color .15s}#catv .hs:hover{outline-color:rgba(60,90,200,.55)}#catv.links .hs{display:block}
+#bubble{position:fixed;display:none;transform:translate(-50%,-100%);max-width:min(280px,70vw);background:#fbfaf7;color:#161616;border:1.5px solid #161616;border-radius:14px;padding:9px 13px;font:italic 17px/1.35 Georgia,serif;z-index:4;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+#bubble::after{content:'';position:absolute;left:50%;bottom:-9px;width:14px;height:14px;background:#fbfaf7;border-right:1.5px solid #161616;border-bottom:1.5px solid #161616;transform:translateX(-50%) rotate(45deg)}
+#skip{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:max(14px,env(safe-area-inset-bottom,0px));display:none;z-index:4;background:rgba(20,20,20,.55);color:#f2f0ea;border:0;border-radius:999px;padding:8px 14px;font:13px Helvetica,Arial,sans-serif;cursor:pointer}
+#skip2{margin-top:14px;background:none;color:var(--ink);border:1px solid rgba(239,231,214,.5);border-radius:8px;padding:10px 16px;font-size:14px;cursor:pointer}
 #stick{position:fixed;left:24px;bottom:40px;width:110px;height:110px;border-radius:50%;border:2px solid rgba(255,255,255,.25);display:none;z-index:4}
 #knob{position:absolute;left:35px;top:35px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.35)}
 </style>
 </head>
 <body>
 <div id="ov"><div id="card">
-<h1>Couloir · prototype 03</h1>
-<p>15 m × 2 m × 2,50 m · murs blanc grain Arches · béton gris clair</p><p>Le chemin noir · cinq œuvres</p>
+<h1>Beyond Black · le chemin noir</h1>
+<p>Galerie virtuelle · prototype</p><p>Un phare au bout d’un ponton. Avancez jusqu’à la porte.</p>
 <p id="help">Clic pour entrer. ZQSD / WASD ou flèches pour marcher, souris pour regarder (ou cliquer-glisser si le pointeur ne se verrouille pas), Maj pour marcher plus vite, clic sur une œuvre, un cartel ou un texte pour l'agrandir, catalogue et livre d’or derrière la porte du fond, porte « Sortie » de la petite pièce pour quitter.</p>
-<button id="go">Entrer</button>
+<button id="skip2" type="button">Passer l’introduction</button> <button id="go">Entrer</button>
 </div></div>
 <div id="cross"></div>
 <div id="hud"></div>
@@ -60,6 +64,7 @@ canvas{display:block}
 <div style="display:flex;align-items:center;gap:12px;margin-top:8px"><button id="gbs" style="background:#1b1b1b;color:#fbfaf7;border:0;border-radius:8px;padding:9px 18px;font:600 14px Helvetica,Arial,sans-serif;cursor:pointer">Signer le livre d’or</button><span id="gbm" style="font:13px Helvetica,Arial,sans-serif;color:#6a6a6a"></span></div></div>
 <p id="gbna" style="display:none;font:14px Helvetica,Arial,sans-serif;color:#6a6a6a"></p>
 <div id="gbl" style="margin-top:22px;border-top:1px solid #d8d4ca"></div></div></div>
+<div id="blackout" style="position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:3"></div><div id="bubble"></div><button id="skip" type="button">Passer l’introduction</button>
 <div id="stick"><div id="knob"></div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -124,7 +129,9 @@ seg(-L/2,DZ0,0,H);seg(DZ1,L/2,0,H);seg(DZ0,DZ1,DH,H);
  const w3=new THREE.Mesh(new THREE.PlaneGeometry(rw,H),wallMatFor(rw/0.6,H/0.6));w3.position.set(cx,H/2,RZ1);w3.rotation.y=Math.PI;scene.add(w3);
  const pn=new THREE.Mesh(new THREE.PlaneGeometry(0.5,0.5),new THREE.MeshBasicMaterial({color:0xfffaf0}));pn.rotation.x=Math.PI/2;pn.position.set(cx,H-0.005,cz);scene.add(pn);
  const l=new THREE.PointLight(0xfff4e6,0.85,7,2);l.position.set(cx,H-0.12,cz);scene.add(l);})();
-wall(W,0,-L/2,0,endMat);wall(W,0,L/2,Math.PI,endMat);
+wall(W,0,-L/2,0,endMat);
+function backSeg(x0,x1,y0,y1){const w=x1-x0,h=y1-y0;const o=new THREE.Mesh(new THREE.PlaneGeometry(w,h),wallMatFor(w/0.6,h/0.6));o.position.set((x0+x1)/2,(y0+y1)/2,L/2);o.rotation.y=Math.PI;o.receiveShadow=true;scene.add(o);}
+backSeg(-W/2,-0.66,0,H);backSeg(0.66,W/2,0,H);backSeg(-0.66,0.66,2.45,H);
 const skMat=new THREE.MeshStandardMaterial({color:0xe6e4dd,roughness:.9});
 {const b=new THREE.Mesh(new THREE.BoxGeometry(0.012,0.07,L),skMat);b.position.set(W/2-0.006,0.035,0);scene.add(b);}
 [[-L/2,DZ0],[DZ1,L/2]].forEach(([a,b2])=>{const b=new THREE.Mesh(new THREE.BoxGeometry(0.012,0.07,b2-a),skMat);b.position.set(-W/2+0.006,0.035,(a+b2)/2);scene.add(b);});
@@ -277,14 +284,220 @@ const BODY='400 25px Georgia, serif',BL=38;
 (()=>{const P=["Dans notre société actuelle, la santé mentale prend une place de plus en plus importante : dans le débat public, les relations amicales, sociales, familiales, intimes. Pourtant, certains aspects restent tabous.","Il est admis de parler d’un passage à vide, de moments de doutes, ou d’idées noires. Il est aisé de donner les meilleurs conseils à celui qui traverse cette épreuve, d’orienter un ami dans les moments de doute, le faire rire quand une simple pensée se matérialise de manière trop brutale. La dépression, elle, n’est pas tolérée. C’est un non-dit qui ronge l’intérieur de l’être au plus profond, une lame insidieuse qui racle les moindres recoins de l’âme.","Dans cette plongée sans scaphandre, l’obscurité devient une pression toujours plus intense, une main griffue qui s’accroche, qui cherche à vous rabaisser et à vous enfoncer toujours plus loin dans le noir.","Dans ces moments, ceux qui comptent vraiment se distinguent. Ce sont ceux qui sont là d’une manière qui serait insignifiante pour les autres. Ils écoutent, ils acceptent la noirceur que vous ne pouvez plus contenir. Et, comme autant d’étincelles, chacun de ces gestes vous fait lever les yeux, et vous accompagne tout au long du chemin noir, jusqu’à prendre le dessus sur l’obscurité."];
  const m=textPanel(1.8,P.map(t=>({text:t,font:BODY,lh:BL,after:16})),{cols:2});const h=m.geometry.parameters.height;
  m.position.set(-W/2+0.003,1.6-h/2,TITLE_Z+0.083);m.rotation.y=Math.PI/2;scene.add(m);const tx={h:'Beyond Black : le chemin noir',p:P};m.userData.tx=tx;TEXTS.push(m);if(window.TITLE_M){TITLE_M.userData.tx=tx;TEXTS.push(TITLE_M);}})();
-// mur du fond, derrière le point d'apparition : logo et portfolio
-(()=>{const z=L/2-0.003;
+// mur de droite, près de l'ascenseur : logo et portfolio
+(()=>{const z=6.2,XW=W/2-0.003;
  const lt=tl.load('art/logo.png');lt.encoding=THREE.sRGBEncoding;lt.anisotropy=8;
- const logo=new THREE.Mesh(new THREE.PlaneGeometry(0.3,0.3),new THREE.MeshStandardMaterial({map:lt,transparent:true,roughness:.9}));logo.position.set(0,1.98,z);logo.rotation.y=Math.PI;scene.add(logo);
- const hd=textPanel(1.5,[{text:'Clem-Ancre',font:'500 64px Georgia, serif',lh:76,after:4},{text:'Sonder le vivant',font:'italic 400 32px Georgia, serif',lh:44,color:'#4a4a4a'}]);const hh=hd.geometry.parameters.height;hd.position.set(0,1.8-hh/2,z);hd.rotation.y=Math.PI;scene.add(hd);
+ const logo=new THREE.Mesh(new THREE.PlaneGeometry(0.3,0.3),new THREE.MeshStandardMaterial({map:lt,transparent:true,roughness:.9}));logo.position.set(XW,1.98,z);logo.rotation.y=-Math.PI/2;scene.add(logo);
+ const hd=textPanel(1.5,[{text:'Clem-Ancre',font:'500 64px Georgia, serif',lh:76,after:4},{text:'Sonder le vivant',font:'italic 400 32px Georgia, serif',lh:44,color:'#4a4a4a'}]);const hh=hd.geometry.parameters.height;hd.position.set(XW,1.8-hh/2,z);hd.rotation.y=-Math.PI/2;scene.add(hd);
  const P=[...["Le dessin est, chez Clément Roulet, une façon d’habiter le monde. Un geste direct, instinctif, qui lui permet de traduire ce qu’il ressent, ce qu’il perçoit, sans détour ni filtre.","Crayon en main, il capte des émotions brutes, des visages croisés, des pensées parfois obscures qu’il couche sur le papier. Il cherche à faire émerger une vérité intérieure. Chaque dessin naît d’une urgence, celle de poser ce qui l’habite, et trouve sa forme dans des carnets peuplés de silhouettes, d’instants saisis, de visions personnelles.","Son attention au choix des matériaux fait pleinement partie de sa démarche. Il privilégie des papiers français, durables, fabriqués avec soin, sur lesquels il peut laisser se déployer ses lignes avec précision.","Clément Roulet explore sans crainte les zones sombres, dans une quête toujours guidée par un désir de compréhension et d’ouverture. À travers ses dessins, il offre un espace d’identification, un terrain de résonance émotionnelle où chacun peut se reconnaître, parfois à son insu."].map(t=>({text:t,font:BODY,lh:BL,after:16}))];
- const m=textPanel(1.5,P,{cols:2});const h=m.geometry.parameters.height;m.position.set(0,1.8-hh-0.03-h/2,z);const tx={h:'Clem-Ancre',s:'Sonder le vivant',p:P.map(b=>b.text)};m.userData.tx=tx;hd.userData.tx=tx;TEXTS.push(m,hd);m.rotation.y=Math.PI;scene.add(m);
- const sp=new THREE.SpotLight(0xfff4e6,0.7,4,0.7,0.7,2);sp.position.set(0,H-0.05,L/2-1.0);const t=new THREE.Object3D();t.position.set(0,1.4,L/2);scene.add(t);sp.target=t;scene.add(sp);})();
+ const m=textPanel(1.5,P,{cols:2});const h=m.geometry.parameters.height;m.position.set(XW,1.8-hh-0.03-h/2,z);const tx={h:'Clem-Ancre',s:'Sonder le vivant',p:P.map(b=>b.text)};m.userData.tx=tx;hd.userData.tx=tx;TEXTS.push(m,hd);m.rotation.y=-Math.PI/2;scene.add(m);
+ const sp=new THREE.SpotLight(0xfff4e6,0.7,4,0.7,0.7,2);sp.position.set(0.1,H-0.05,6.2);const t=new THREE.Object3D();t.position.set(W/2,1.4,6.2);scene.add(t);sp.target=t;scene.add(sp);})();
+
+
+// ===================== Introduction : ponton, phare, ascenseur =====================
+const OX=2000; // le monde extérieur est placé loin du couloir
+let mode='intro',canMove=true,canLook=true,lockYaw=0,lockPitch=0,introStage=0,cabinOpen=false,shake=0,introRun=0;
+const ss01=k=>k<=0?0:k>=1?1:k*k*(3-2*k);
+const tweens=[],timers=[],waiters=[];
+function sleep(s){const id=introRun;return new Promise(r=>timers.push({t:s,r,id}));}
+function tween(d,fn){const id=introRun;return new Promise(r=>tweens.push({d,e:0,fn,r,id}));}
+function waitFor(cond){const id=introRun;return new Promise(r=>waiters.push({cond,r,id}));}
+function tickScript(dt){
+ for(let i=tweens.length-1;i>=0;i--){const t=tweens[i];if(t.id!==introRun){tweens.splice(i,1);continue;}t.e+=dt;const k=Math.min(1,t.e/t.d);t.fn(ss01(k));if(k>=1){tweens.splice(i,1);t.r();}}
+ for(let i=timers.length-1;i>=0;i--){const t=timers[i];if(t.id!==introRun){timers.splice(i,1);continue;}t.t-=dt;if(t.t<=0){timers.splice(i,1);t.r();}}
+ for(let i=waiters.length-1;i>=0;i--){const w=waiters[i];if(w.id!==introRun){waiters.splice(i,1);continue;}if(w.cond()){waiters.splice(i,1);w.r();}}}
+function wrapA(a){return Math.atan2(Math.sin(a),Math.cos(a));}
+async function turnTo(y,p,d){const y0=lockYaw,p0=lockPitch,dy=wrapA(y-y0);await tween(d,k=>{lockYaw=y0+dy*k;lockPitch=p0+(p-p0)*k;});}
+
+const EXT=new THREE.Group();EXT.position.set(OX,0,0);scene.add(EXT);
+// ciel de fin de journée
+const SUN=new THREE.Vector3(-0.5,0.17,-0.85).normalize();
+const sky=new THREE.Mesh(new THREE.SphereGeometry(460,40,20),new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,uniforms:{sunDir:{value:SUN}},
+ vertexShader:'varying vec3 vD;void main(){vD=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+ fragmentShader:'varying vec3 vD;uniform vec3 sunDir;void main(){vec3 d=normalize(vD);float h=d.y;vec3 hor=vec3(.96,.80,.64),zen=vec3(.40,.53,.70),low=vec3(.70,.70,.70);vec3 c=mix(hor,zen,pow(clamp(h,0.,1.),.5));c=mix(c,low,clamp(-h*5.,0.,1.));float s=max(dot(d,sunDir),0.);c+=vec3(1.,.80,.55)*pow(s,24.)*.35+vec3(1.,.92,.78)*pow(s,700.)*1.6;gl_FragColor=vec4(c,1.);}'}));
+sky.renderOrder=-1;EXT.add(sky);
+// mer calme
+const seaMat=new THREE.ShaderMaterial({uniforms:{t:{value:0},sunDir:{value:SUN},camPos:{value:new THREE.Vector3()}},
+ vertexShader:'uniform float t;varying vec3 vW;varying vec3 vN;float h(vec2 p){return sin(p.x*.32+t*.7)*.07+sin(p.y*.41-t*.55)*.06+sin((p.x+p.y)*.85+t*1.2)*.03+sin((p.x*1.7-p.y*1.3)+t*1.8)*.018;}void main(){vec4 w=modelMatrix*vec4(position,1.);float e=.15;float hh=h(w.xz);float hx=h(w.xz+vec2(e,0.));float hz=h(w.xz+vec2(0.,e));w.y+=hh;vN=normalize(vec3(-(hx-hh)/e,1.,-(hz-hh)/e));vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}',
+ fragmentShader:'uniform vec3 sunDir;uniform vec3 camPos;uniform float t;varying vec3 vW;varying vec3 vN;void main(){vec3 V=normalize(camPos-vW);vec2 q=vW.xz*1.7;vec3 N=normalize(vN+vec3(sin(q.x+t*1.3)*.035+sin(q.y*1.3-t)*.02,0.,cos(q.y+t*1.1)*.035));float fr=pow(1.-max(dot(N,V),0.),5.);vec3 deep=vec3(.20,.30,.36),skyc=vec3(.90,.80,.70);vec3 c=mix(deep,skyc,clamp(fr*1.3+.06,0.,1.));vec3 H2=normalize(V+sunDir);c+=vec3(1.,.84,.62)*pow(max(dot(N,H2),0.),220.)*1.6;float d=length(camPos.xz-vW.xz);c=mix(c,vec3(.95,.82,.68),smoothstep(70.,430.,d));gl_FragColor=vec4(c,1.);}'});
+const sea=new THREE.Mesh(new THREE.PlaneGeometry(900,900,300,300),seaMat);sea.rotation.x=-Math.PI/2;sea.position.y=-0.9;EXT.add(sea);
+const fogExt=new THREE.Fog(0xf0d1b2,90,430);
+const sunL=new THREE.DirectionalLight(0xffd8b0,1.25);sunL.position.set(OX+SUN.x*80,SUN.y*80+8,SUN.z*80);sunL.target.position.set(OX,4,0);scene.add(sunL.target);
+sunL.castShadow=true;sunL.shadow.mapSize.set(2048,2048);Object.assign(sunL.shadow.camera,{left:-26,right:26,top:30,bottom:-10,near:1,far:200});sunL.shadow.bias=-0.0008;scene.add(sunL);
+const hemiExt=new THREE.HemisphereLight(0xd6deea,0x6d665a,0.6);scene.add(hemiExt);
+
+// îlot de roches et plateforme
+const rockMat=new THREE.MeshStandardMaterial({color:0x7f7c76,roughness:.95,flatShading:true});
+for(let i=0;i<30;i++){const a=i/30*Math.PI*2+Math.random()*.15;if(Math.abs(wrapA(a-Math.PI/2))<0.33)continue;const r=4.7+Math.random()*1.5,s=0.8+Math.random()*1.3;
+ const m=new THREE.Mesh(new THREE.DodecahedronGeometry(s,0),rockMat);m.position.set(Math.cos(a)*r,-0.75+Math.random()*0.45,Math.sin(a)*r);m.scale.y=0.5+Math.random()*0.35;m.rotation.set(Math.random()*3,Math.random()*3,0);m.castShadow=m.receiveShadow=true;EXT.add(m);}
+const plat=new THREE.Mesh(new THREE.CylinderGeometry(4.75,5.1,1.2,48),new THREE.MeshStandardMaterial({color:0xa49f95,roughness:.92}));plat.position.y=-0.6;plat.receiveShadow=true;EXT.add(plat);
+
+// phare (30 m)
+const RT=r=>3.2-0.6*(r/26);
+const towerMat=new THREE.MeshStandardMaterial({color:0xeeeae1,roughness:.85});
+const blackMat=new THREE.MeshStandardMaterial({color:0x1f1e1d,roughness:.6,metalness:.2});
+const plaster=new THREE.MeshStandardMaterial({color:0xe9e3d6,roughness:.95,side:THREE.BackSide});
+const gO=Math.asin(0.6/3.15),gI=Math.asin(0.6/2.5),DH2=2.5;
+{const lo=new THREE.Mesh(new THREE.CylinderGeometry(RT(DH2),3.2,DH2,56,1,true,gO,Math.PI*2-2*gO),towerMat);lo.position.y=DH2/2;lo.castShadow=lo.receiveShadow=true;EXT.add(lo);
+ const up=new THREE.Mesh(new THREE.CylinderGeometry(RT(26),RT(DH2),26-DH2,56,1,true),towerMat);up.position.y=DH2+(26-DH2)/2;up.castShadow=true;up.receiveShadow=true;EXT.add(up);
+ [[21.4,1.1],[0,0.35]].forEach(([y,h])=>{const b=new THREE.Mesh(new THREE.CylinderGeometry(RT(y+h)+0.015,RT(y)+0.015,h,56,1,true,y<1?gO:0,y<1?Math.PI*2-2*gO:Math.PI*2),blackMat);b.position.y=y+h/2;EXT.add(b);});
+ const ilo=new THREE.Mesh(new THREE.CylinderGeometry(2.5,2.5,DH2,48,1,true,gI,Math.PI*2-2*gI),plaster);ilo.position.y=DH2/2;EXT.add(ilo);
+ const iup=new THREE.Mesh(new THREE.CylinderGeometry(2.5,2.5,7-DH2,48,1,true),plaster);iup.position.y=DH2+(7-DH2)/2;EXT.add(iup);
+ const ceilI=new THREE.Mesh(new THREE.CircleGeometry(2.5,40),new THREE.MeshStandardMaterial({color:0x4a3f35,roughness:.9}));ceilI.rotation.x=Math.PI/2;ceilI.position.y=7;EXT.add(ceilI);
+ const revMat=new THREE.MeshStandardMaterial({color:0xe2dccf,roughness:.95});
+ [-1,1].forEach(s=>{const r=new THREE.Mesh(new THREE.BoxGeometry(0.06,DH2,0.75),revMat);r.position.set(s*0.63,DH2/2,2.82);EXT.add(r);});
+ // tympan au-dessus de la porte cintrée
+ const sh=new THREE.Shape();sh.moveTo(-0.6,1.9);sh.lineTo(-0.6,2.6);sh.lineTo(0.6,2.6);sh.lineTo(0.6,1.9);sh.absarc(0,1.9,0.6,0,Math.PI,false);
+ const ty=new THREE.Mesh(new THREE.ExtrudeGeometry(sh,{depth:0.8,bevelEnabled:false}),towerMat);ty.position.z=2.42;EXT.add(ty);
+ // galerie, lanterne, toit
+ const gal=new THREE.Mesh(new THREE.CylinderGeometry(3.05,3.05,0.18,48),blackMat);gal.position.y=26.05;EXT.add(gal);
+ const rail=new THREE.Mesh(new THREE.TorusGeometry(2.98,0.03,6,64),blackMat);rail.rotation.x=Math.PI/2;rail.position.y=27.05;EXT.add(rail);
+ for(let i=0;i<24;i++){const a=i/24*Math.PI*2;const p=new THREE.Mesh(new THREE.BoxGeometry(0.04,0.9,0.04),blackMat);p.position.set(Math.cos(a)*2.98,26.6,Math.sin(a)*2.98);EXT.add(p);}
+ const lan=new THREE.Mesh(new THREE.CylinderGeometry(1.7,1.7,2.4,24,1,true),new THREE.MeshStandardMaterial({color:0xfff2cc,emissive:0xffcf7a,emissiveIntensity:.55,transparent:true,opacity:.6,roughness:.15,side:THREE.DoubleSide}));lan.position.y=27.35;EXT.add(lan);
+ for(let i=0;i<8;i++){const a=i/8*Math.PI*2;const p=new THREE.Mesh(new THREE.BoxGeometry(0.07,2.4,0.07),blackMat);p.position.set(Math.cos(a)*1.72,27.35,Math.sin(a)*1.72);EXT.add(p);}
+ const roof=new THREE.Mesh(new THREE.ConeGeometry(2.05,1.7,32),blackMat);roof.position.y=29.4;roof.castShadow=true;EXT.add(roof);
+ const tip=new THREE.Mesh(new THREE.SphereGeometry(0.18,12,8),blackMat);tip.position.y=30.35;EXT.add(tip);
+ const winM=new THREE.MeshStandardMaterial({color:0x2b2926,roughness:.5});
+ [[8,0.45],[13.5,-0.5],[19,0.35]].forEach(([y,a])=>{const r=RT(y)+0.01;const w=new THREE.Mesh(new THREE.PlaneGeometry(0.45,0.85),winM);w.position.set(Math.sin(a)*r,y,Math.cos(a)*r);w.rotation.y=a;EXT.add(w);});
+ const lamp=new THREE.PointLight(0xffd59a,0.9,14,2);lamp.position.set(0,4.8,0);EXT.add(lamp);
+ const lampD=new THREE.PointLight(0xffd59a,0.35,6,2);lampD.position.set(0,2.3,1.6);EXT.add(lampD);
+ // sol intérieur (anneau autour du puits de l'ascenseur) et escalier le long du mur
+ const fl=new THREE.Mesh(new THREE.RingGeometry(1.0,2.5,48),new THREE.MeshStandardMaterial({color:0xb8b0a2,roughness:.9}));fl.rotation.x=-Math.PI/2;fl.position.y=0.005;fl.receiveShadow=true;EXT.add(fl);
+ const pit=new THREE.Mesh(new THREE.CylinderGeometry(1.0,1.0,2.6,40,1,true),new THREE.MeshStandardMaterial({color:0x1a1a1a,side:THREE.BackSide}));pit.position.y=-1.3;EXT.add(pit);
+ const stepM=new THREE.MeshStandardMaterial({color:0x6b5a49,roughness:.85});
+ for(let i=0;i<30;i++){const a=Math.PI*0.62+i*0.165;const s=new THREE.Mesh(new THREE.BoxGeometry(0.75,0.06,0.42),stepM);const y=0.22+i*0.22;s.position.set(Math.sin(a)*2.1,y,Math.cos(a)*2.1);s.rotation.y=a+Math.PI/2;s.castShadow=true;EXT.add(s);}
+}
+// porte cintrée (bois sombre), charnière à gauche
+const doorPivot=new THREE.Group();doorPivot.position.set(-0.6,0,3.12);EXT.add(doorPivot);
+{const sh=new THREE.Shape();sh.moveTo(0,0);sh.lineTo(1.2,0);sh.lineTo(1.2,1.9);sh.absarc(0.6,1.9,0.6,0,Math.PI,false);sh.lineTo(0,0);
+ const d=new THREE.Mesh(new THREE.ExtrudeGeometry(sh,{depth:0.07,bevelEnabled:false}),new THREE.MeshStandardMaterial({color:0x3b2f25,roughness:.75}));d.position.z=-0.035;d.castShadow=true;doorPivot.add(d);
+ const k=new THREE.Mesh(new THREE.SphereGeometry(0.035,10,8),new THREE.MeshStandardMaterial({color:0xb08d57,metalness:.8,roughness:.3}));k.position.set(1.05,1.05,0.06);doorPivot.add(k);}
+
+// ponton en bois (15 m)
+{const woodA=new THREE.MeshStandardMaterial({color:0x8a7a68,roughness:.9}),woodB=new THREE.MeshStandardMaterial({color:0x7a6b5a,roughness:.9}),post=new THREE.MeshStandardMaterial({color:0x4c4036,roughness:.9});
+ for(let z=4.55;z<19.9;z+=0.235){const p=new THREE.Mesh(new THREE.BoxGeometry(2.0,0.05,0.21),Math.random()<.5?woodA:woodB);p.position.set((Math.random()-.5)*0.02,-0.025,z);p.receiveShadow=true;p.castShadow=true;EXT.add(p);}
+ [-0.88,0.88].forEach(x=>{const s=new THREE.Mesh(new THREE.BoxGeometry(0.12,0.2,15.4),post);s.position.set(x,-0.15,12.2);EXT.add(s);});
+ for(let z=5.2;z<20.2;z+=2.4)[-1.04,1.04].forEach(x=>{const p=new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.1,2.3,10),post);p.position.set(x,-0.75,z);p.castShadow=true;EXT.add(p);});}
+
+// ascenseur rond aux portes en accordéon (4 panneaux à hublots)
+function panelTex(){const c=document.createElement('canvas');c.width=128;c.height=900;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,128,900);
+ g.globalCompositeOperation='destination-out';g.beginPath();g.ellipse(64,380,34,250,0,0,Math.PI*2);g.fill();g.globalCompositeOperation='source-over';
+ g.strokeStyle='#777';g.lineWidth=7;g.beginPath();g.ellipse(64,380,37,253,0,0,Math.PI*2);g.stroke();
+ const t=new THREE.CanvasTexture(c);return t;}
+const PT=panelTex();
+function makeCabin(){const grp=new THREE.Group();
+ const metal=new THREE.MeshStandardMaterial({color:0x2e2c29,metalness:.65,roughness:.38,envMap:env,envMapIntensity:.6,side:THREE.DoubleSide});
+ const gC=Math.asin(0.6/0.95);
+ const shell=new THREE.Mesh(new THREE.CylinderGeometry(0.95,0.95,2.45,48,1,true,gC,Math.PI*2-2*gC),metal);shell.position.y=1.225;shell.castShadow=true;grp.add(shell);
+ const lin=new THREE.Mesh(new THREE.CylinderGeometry(0.92,0.92,2.4,48,1,true,gC,Math.PI*2-2*gC),new THREE.MeshStandardMaterial({color:0xe7e0d1,roughness:.85,side:THREE.BackSide}));lin.position.y=1.22;grp.add(lin);
+ const fl=new THREE.Mesh(new THREE.CircleGeometry(0.93,40),new THREE.MeshStandardMaterial({color:0x3a3633,roughness:.7}));fl.rotation.x=-Math.PI/2;fl.position.y=0.02;grp.add(fl);
+ const top=new THREE.Mesh(new THREE.CircleGeometry(0.97,40),metal);top.rotation.x=-Math.PI/2;top.position.y=2.452;grp.add(top);
+ const ring=new THREE.Mesh(new THREE.TorusGeometry(0.97,0.025,6,48),new THREE.MeshStandardMaterial({color:0xa98a55,metalness:.8,roughness:.3}));ring.rotation.x=Math.PI/2;ring.position.y=2.452;grp.add(ring);
+ const lampMat=new THREE.MeshStandardMaterial({color:0xfff3dc,emissive:0xfff0d0,emissiveIntensity:1});
+ const cl=new THREE.Mesh(new THREE.CircleGeometry(0.4,32),lampMat);cl.rotation.x=Math.PI/2;cl.position.y=2.41;grp.add(cl);
+ const light=new THREE.PointLight(0xfff0d8,1.1,3.6,2);light.position.y=2.2;grp.add(light);
+ [-0.64,0.64].forEach(x=>{const p=new THREE.Mesh(new THREE.BoxGeometry(0.1,2.45,0.1),metal);p.position.set(x,1.225,0.74);grp.add(p);});
+ const lt=new THREE.Mesh(new THREE.BoxGeometry(1.38,0.26,0.1),metal);lt.position.set(0,2.33,0.74);grp.add(lt);
+ // titre au fond de la cabine
+ const c=document.createElement('canvas');c.width=1024;c.height=420;const g=c.getContext('2d');g.fillStyle='#161616';g.textAlign='center';g.font='600 132px Georgia, serif';g.fillText('Beyond Black',512,190);g.font='italic 400 86px Georgia, serif';g.fillStyle='#3b3b3b';g.fillText('le chemin noir',512,320);
+ const tt=new THREE.CanvasTexture(c);tt.encoding=THREE.sRGBEncoding;tt.anisotropy=8;
+ const title=new THREE.Mesh(new THREE.PlaneGeometry(1.0,0.41),new THREE.MeshStandardMaterial({map:tt,transparent:true,roughness:.9}));title.position.set(0,1.62,-0.78);grp.add(title);title.visible=false;
+ // portes en accordéon
+ const pm=new THREE.MeshStandardMaterial({color:0x3a3733,metalness:.6,roughness:.4,envMap:env,envMapIntensity:.5,alphaMap:PT,alphaTest:.5,side:THREE.DoubleSide});
+ function leaf(){const m=new THREE.Mesh(new THREE.PlaneGeometry(0.3,2.2),pm);m.position.y=1.1;return m;}
+ const L1=new THREE.Group(),L2=new THREE.Group(),R1=new THREE.Group(),R2=new THREE.Group();
+ L1.position.set(-0.6,0,0.7);const l1=leaf();l1.position.x=0.15;L1.add(l1);L2.position.x=0.3;const l2=leaf();l2.position.x=0.15;L2.add(l2);L1.add(L2);
+ R1.position.set(0.6,0,0.7);const r1=leaf();r1.position.x=-0.15;R1.add(r1);R2.position.x=-0.3;const r2=leaf();r2.position.x=-0.15;R2.add(r2);R1.add(R2);
+ grp.add(L1,R1);
+ function setDoors(a){L1.rotation.y=a*1.42;L2.rotation.y=-a*2.84;R1.rotation.y=-a*1.42;R2.rotation.y=a*2.84;}
+ setDoors(0);
+ return {grp,setDoors,light,lampMat,title};}
+const cabA=makeCabin();cabA.grp.position.y=-2.45;EXT.add(cabA.grp);
+const CBZ=L/2+0.76;
+const cabB=makeCabin();cabB.grp.position.set(0,0,CBZ);cabB.grp.rotation.y=Math.PI;scene.add(cabB.grp);cabB.title.visible=true;
+
+// guide (avatar) : silhouette découpée qui suit le visiteur du regard
+function cutout(url,w,h){const t=tl.load(url);t.encoding=THREE.sRGBEncoding;t.anisotropy=8;
+ const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({map:t,transparent:true,alphaTest:0.5,side:THREE.DoubleSide,roughness:.9}));
+ m.castShadow=true;m.customDepthMaterial=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking,map:t,alphaTest:0.5});return m;}
+const NPC={x:0,z:2.15,base:0,body:new THREE.Group(),head:new THREE.Group(),walking:0};
+{const U=0.0015;const bm=cutout('art/avatar-corps.png',400*U,930*U);bm.position.y=(1168-725)*U;NPC.body.add(bm);
+ NPC.head.rotation.order='YXZ';const hm=cutout('art/avatar-tete.png',300*U,296.5*U);hm.position.z=0.012;NPC.head.add(hm);NPC.headY=(1168-154)*U;
+ EXT.add(NPC.body,NPC.head);NPC.body.visible=NPC.head.visible=false;}
+function npcUpdate(dt){if(!NPC.body.visible)return;const bob=NPC.walking?Math.abs(Math.sin(performance.now()/180))*0.03:0;
+ NPC.body.position.set(NPC.x,bob,NPC.z);NPC.head.position.set(NPC.x,NPC.headY+bob,NPC.z);
+ const dx=cam.position.x-OX-NPC.x,dz=cam.position.z-NPC.z;let d=wrapA(Math.atan2(dx,dz)-NPC.base);const k=1-Math.exp(-dt*5);
+ const tb=NPC.base+(NPC.walking?0:Math.max(-0.45,Math.min(0.45,d*0.35))),th=NPC.base+Math.max(-1.25,Math.min(1.25,d));
+ NPC.body.rotation.y+=wrapA(tb-NPC.body.rotation.y)*k;NPC.head.rotation.y+=wrapA(th-NPC.head.rotation.y)*k;
+ const tp=Math.max(-0.25,Math.min(0.25,Math.atan2(cam.position.y-NPC.headY,Math.hypot(dx,dz))));NPC.head.rotation.x+=(-tp*0.6-NPC.head.rotation.x)*k;}
+async function npcWalk(x,z,d){const x0=NPC.x,z0=NPC.z;NPC.base=Math.atan2(x-x0,z-z0);NPC.walking=1;await tween(d,k=>{NPC.x=x0+(x-x0)*k;NPC.z=z0+(z-z0)*k;});NPC.walking=0;}
+// bulle de dialogue près de la tête
+const bubble=document.getElementById('bubble');let sayUntil=0,sayT=0;
+function say(txt,dur){bubble.textContent=txt;sayT=0;sayUntil=dur;bubble.style.display='block';}
+function bubbleUpdate(dt){if(sayUntil<=0){bubble.style.display='none';return;}sayT+=dt;if(sayT>sayUntil){sayUntil=0;bubble.style.display='none';return;}
+ const v=new THREE.Vector3(OX+NPC.x,NPC.headY+0.36,NPC.z).project(cam);if(v.z>1||!NPC.body.visible){bubble.style.opacity=0;return;}
+ bubble.style.opacity=Math.min(1,sayT/0.25,(sayUntil-sayT)/0.3);bubble.style.left=((v.x+1)/2*innerWidth)+'px';bubble.style.top=((1-v.y)/2*innerHeight)+'px';}
+
+// sons de l'introduction
+let seaN=null,seaG=null;
+function noiseBuf(sec){const b=ac.createBuffer(1,ac.sampleRate*sec,ac.sampleRate),d=b.getChannelData(0);let l=0;for(let i=0;i<d.length;i++){l=l*0.97+(Math.random()*2-1)*0.03;d[i]=l*6;}return b;}
+function seaStart(){if(!ac||seaN)return;seaN=ac.createBufferSource();seaN.buffer=noiseBuf(6);seaN.loop=true;const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=650;seaG=ac.createGain();seaG.gain.value=0.0;
+ const lfo=ac.createOscillator();lfo.frequency.value=0.11;const lg=ac.createGain();lg.gain.value=0.05;lfo.connect(lg).connect(seaG.gain);lfo.start();
+ seaN.connect(lp).connect(seaG).connect(ac.destination);seaN.start();seaG.gain.setTargetAtTime(0.09,ac.currentTime,1.2);}
+function seaStop(){if(!seaN)return;try{seaG.gain.cancelScheduledValues(ac.currentTime);seaG.gain.setTargetAtTime(0,ac.currentTime,0.4);const n=seaN;setTimeout(()=>{try{n.stop();}catch(e){}},2500);}catch(e){}seaN=null;}
+function sfxNoise(d,f0,f1,vol){if(!ac)return;const t=ac.currentTime;const s=ac.createBufferSource();s.buffer=noiseBuf(d+0.1);const bp=ac.createBiquadFilter();bp.type='bandpass';bp.Q.value=2;bp.frequency.setValueAtTime(f0,t);bp.frequency.linearRampToValueAtTime(f1,t+d);
+ const g=ac.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.08);g.gain.setValueAtTime(vol,t+d-0.15);g.gain.linearRampToValueAtTime(0,t+d);s.connect(bp).connect(g).connect(ac.destination);s.start(t);s.stop(t+d+0.1);}
+let hum=null;
+function humStart(vol){if(!ac||hum)return;const t=ac.currentTime;const g=ac.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.8);const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=260;
+ const o1=ac.createOscillator();o1.frequency.value=52;const o2=ac.createOscillator();o2.type='triangle';o2.frequency.value=104;o1.connect(lp);o2.connect(lp);lp.connect(g).connect(ac.destination);o1.start();o2.start();hum={g,o:[o1,o2]};}
+function humStop(){if(!hum)return;const t=ac.currentTime,h=hum;h.g.gain.cancelScheduledValues(t);h.g.gain.setValueAtTime(h.g.gain.value,t);h.g.gain.linearRampToValueAtTime(0,t+0.7);setTimeout(()=>h.o.forEach(o=>{try{o.stop();}catch(e){}}),900);hum=null;}
+function ding(){if(!ac)return;const t=ac.currentTime;[[880,0.12],[1318,0.07]].forEach(([f,v],i)=>{const o=ac.createOscillator();o.frequency.value=f;const g=ac.createGain();g.gain.setValueAtTime(0,t+i*0.18);g.gain.linearRampToValueAtTime(v,t+i*0.18+0.01);g.gain.exponentialRampToValueAtTime(0.0005,t+i*0.18+1.4);o.connect(g).connect(ac.destination);o.start(t+i*0.18);o.stop(t+i*0.18+1.5);});}
+function click(){if(!ac)return;const t=ac.currentTime;const o=ac.createOscillator();o.type='square';o.frequency.value=180+Math.random()*80;const g=ac.createGain();g.gain.setValueAtTime(0.03,t);g.gain.exponentialRampToValueAtTime(0.0005,t+0.04);o.connect(g).connect(ac.destination);o.start(t);o.stop(t+0.05);}
+
+// bascule entre extérieur et galerie
+function applyMode(){const ext=mode==='intro';sunL.visible=hemiExt.visible=EXT.visible=ext;scene.fog=ext?fogExt:null;scene.background=ext?null:new THREE.Color(0x0e0e0f);cam.far=ext?900:60;cam.updateProjectionMatrix();
+ document.getElementById('hud').style.display=ext?'none':'block';document.getElementById('skip').style.display=(ext&&started)?'block':'none';document.getElementById('skip2').style.display=ext?'inline-block':'none';}
+let started=false;
+function resetIntro(){try{dark(false);}catch(e){}introRun++;tweens.length=timers.length=waiters.length=0;mode='intro';introStage=0;cabinOpen=false;canMove=true;canLook=true;shake=0;
+ doorPivot.rotation.y=0;cabA.grp.position.y=-2.45;cabA.setDoors(0);cabA.title.visible=false;cabA.light.intensity=1.1;cabA.lampMat.emissiveIntensity=1;cabB.setDoors(0);
+ NPC.x=0;NPC.z=2.15;NPC.base=0;NPC.walking=0;NPC.body.visible=NPC.head.visible=false;NPC.body.rotation.y=NPC.head.rotation.y=0;sayUntil=0;
+ px=OX;pz=19.3;yaw=0;pitch=0;applyMode();}
+function finishToGallery(){dark(false);introRun++;tweens.length=timers.length=waiters.length=0;seaStop();humStop();sayUntil=0;mode='gallery';introStage=9;canMove=true;canLook=true;shake=0;
+ cabB.setDoors(1);px=0;pz=L/2-0.8;yaw=0;pitch=0;applyMode();}
+
+async function doorSequence(){introStage=1;sfxNoise(1.5,320,140,0.12);await tween(1.6,k=>{doorPivot.rotation.y=1.9*k;});
+ await waitFor(()=>Math.hypot(px-OX,pz)<2.2);
+ sfxNoise(3.0,90,160,0.08);humStart(0.06);await tween(3.0,k=>{cabA.grp.position.y=-2.45*(1-k);});humStop();
+ await waitFor(()=>Math.hypot(px-OX,pz)<2.0);
+ sfxNoise(1.3,500,900,0.06);await tween(1.4,k=>cabA.setDoors(k));cabinOpen=true;introStage=3;}
+const blackout=document.getElementById('blackout');
+function dark(on){blackout.style.opacity=on?1:0;}
+async function cabinSequence(){introStage=4;
+ await sleep(1.0);
+ sfxNoise(1.3,900,500,0.06);await tween(1.5,k=>cabA.setDoors(1-k));cabinOpen=false;
+ await sleep(0.6);
+ // clignotements, avec deux passages au noir complet
+ const seq=[[1,.08],[0,.06],[1,.12],[0,.05],[1,.05],['B',.32],[1,.1],[0,.08],[1,.06],[0,.14],[1,.05],['B',.45],[0,.1],[1,.04],[0,.2]];
+ for(const [st,d] of seq){if(st==='B'){dark(true);cabA.light.intensity=0;cabA.lampMat.emissiveIntensity=0.02;}else{dark(false);cabA.light.intensity=st?1.1:0.0;cabA.lampMat.emissiveIntensity=st?1:0.02;}click();await sleep(d);}
+ dark(true);await sleep(0.6);cabA.title.visible=true;cabA.light.intensity=1.1;cabA.lampMat.emissiveIntensity=1;dark(false);
+ await sleep(1.2);
+ humStart(0.09);shake=1;await sleep(7.0);shake=0;humStop();
+ // arrivée : même place dans la cabine de la galerie (tournée de 180°)
+ const lx=px-OX,lz=pz;mode='gallery';applyMode();seaStop();px=-lx;pz=CBZ-lz;yaw+=Math.PI;cabB.setDoors(0);
+ ding();await sleep(0.9);
+ sfxNoise(1.3,500,900,0.06);await tween(1.5,k=>cabB.setDoors(k));introStage=9;}
+function introTick(dt){tickScript(dt);seaMat.uniforms.t.value+=dt;seaMat.uniforms.camPos.value.copy(cam.position);npcUpdate(dt);bubbleUpdate(dt);
+ if(mode==='intro'&&introStage===0&&started&&pz<5.4)doorSequence();
+ if(mode==='intro'&&introStage===3&&cabinOpen&&Math.hypot(px-OX,pz)<0.42)cabinSequence();}
+function insideIntro(x,z){if(introStage>=4)return Math.hypot(x,z)<0.55;
+ if(NPC.body.visible&&Math.hypot(x-NPC.x,z-NPC.z)<0.38)return false;
+ if(Math.abs(x)<=0.82&&z>=3.3&&z<=19.7)return true;
+ const open=doorPivot.rotation.y>1.2;
+ if(open&&Math.abs(x)<=0.35&&z>=1.6&&z<3.4)return true;
+ const r=Math.hypot(x,z);
+ if(open&&r<1.8){if(r<1.2){if(!cabinOpen)return false;return r<0.6||(Math.abs(x)<0.42&&z>0);}return true;}
+ return false;}
+resetIntro();
 
 // audio: footsteps on polished concrete (synthesised)
 let ac=null,rev=null;
@@ -317,7 +530,7 @@ function useDrag(){if(dragMode)return;dragMode=true;ov.style.display='none';rend
 function tryLock(){if(dragMode||touch)return;const el=renderer.domElement;let p;try{p=el.requestPointerLock&&el.requestPointerLock();}catch(e){useDrag();return;}if(!el.requestPointerLock){useDrag();return;}if(p&&p.catch)p.catch(()=>useDrag());setTimeout(()=>{if(!locked)useDrag();},500);}
 function afterClose(relock){if(dragMode)return;if(relock){tryLock();}else{ov.style.display='flex';document.getElementById('go').textContent='Reprendre';}}
 document.addEventListener('pointerlockerror',()=>useDrag());
-function enter(){initAudio();if(ac.state==='suspended')ac.resume();ov.style.display='none';if(!touch){tryLock();}else{document.getElementById('stick').style.display='block';}}
+function enter(){initAudio();if(ac.state==='suspended')ac.resume();if(!started&&mode==='intro'){started=true;seaStart();applyMode();}ov.style.display='none';if(!touch){tryLock();}else{document.getElementById('stick').style.display='block';}}
 document.getElementById('go').addEventListener('click',e=>{e.stopPropagation();enter();});
 ov.addEventListener('click',enter);
 document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===renderer.domElement;if(!locked&&!touch&&!viewing&&!dragMode){ov.style.display='flex';document.getElementById('go').textContent='Reprendre';}});
@@ -352,11 +565,13 @@ function closeZoom(relock){zoom.style.display='none';if(!touch){afterClose(reloc
 function pickDoor(nx,ny){ray.setFromCamera({x:nx,y:ny},cam);return ray.intersectObjects(DOOR).length>0;}
 const bye=document.getElementById('bye');
 function leave(){viewing=true;bye.style.display='flex';if(document.pointerLockElement)document.exitPointerLock();document.getElementById('stick').style.display='none';}
-document.getElementById('again').addEventListener('click',e=>{e.stopPropagation();bye.style.display='none';px=0;pz=L/2-0.8;yaw=0;pitch=0;viewing=false;ov.style.display='flex';document.getElementById('go').textContent='Entrer';});
+document.getElementById('again').addEventListener('click',e=>{e.stopPropagation();bye.style.display='none';started=false;resetIntro();viewing=false;ov.style.display='flex';document.getElementById('go').textContent='Entrer';});
+document.getElementById('skip').addEventListener('click',e=>{e.stopPropagation();finishToGallery();});
+document.getElementById('skip2').addEventListener('click',e=>{e.stopPropagation();enter();finishToGallery();});
 renderer.domElement.addEventListener('click',e=>{if(viewing)return;let nx=0,ny=0;if(!locked){if(!touch&&!dragMode)return;if(dragMode&&dragged)return;nx=e.clientX/innerWidth*2-1;ny=-(e.clientY/innerHeight)*2+1;}const a=pick(nx,ny);if(a){openZoom(a);return;}const pa=pickPic(nx,ny);if(pa){openImg(pa);return;}const tt=pickTxt(nx,ny);if(tt){openTxt(tt);return;}if(pickCat(nx,ny)){openCat();return;}if(pickGB(nx,ny)){openGB();return;}if(pickDoor(nx,ny))leave();});
 zoom.addEventListener('click',e=>{e.stopPropagation();closeZoom(true);});
 addEventListener('keydown',e=>{if(viewing&&e.code==='Escape'&&zoom.style.display==='flex')closeZoom(false);});
-function inside(x,z){const LX=-2.75,LZ=(DZ0+DZ1)/2;if(Math.hypot(x-LX,z-LZ)<0.3)return false;
+function inside(x,z){if(mode==='intro')return insideIntro(x-OX,z);if(introStage<9)return Math.hypot(x,z-CBZ)<0.55;if(Math.hypot(x,z-CBZ)<0.6||(Math.abs(x)<0.42&&z>L/2-R-0.05&&z<CBZ))return true;const LX=-2.75,LZ=(DZ0+DZ1)/2;if(Math.hypot(x-LX,z-LZ)<0.3)return false;
  if(x>=-W/2+R&&x<=W/2-R&&z>=-L/2+R&&z<=L/2-R)return true;
  if(x>=-W/2-R-0.05&&x<=-W/2+R+0.05&&z>=DZ0+0.12&&z<=DZ1-0.12)return true;
  if(x>=RX+R&&x<=-W/2-R&&z>=-L/2+R&&z<=RZ1-R)return true;return false;}
@@ -403,7 +618,8 @@ function loop(now){const dt=Math.min(0.05,(now-last)/1000);last=now;
  let f=0,s=0;
  if(keys.KeyW||keys.KeyZ||keys.ArrowUp)f+=1;if(keys.KeyS||keys.ArrowDown)f-=1;
  if(keys.KeyA||keys.KeyQ||keys.ArrowLeft)s-=1;if(keys.KeyD||keys.ArrowRight)s+=1;
- f-=mvy;s+=mvx;if(viewing){f=0;s=0;}
+ f-=mvy;s+=mvx;if(viewing||!canMove){f=0;s=0;}
+ introTick(dt);if(!canLook){yaw=lockYaw;pitch=lockPitch;}
  const run=keys.ShiftLeft||keys.ShiftRight;const sp=(run?2.2:1.35);
  const m=Math.hypot(f,s);let moved=0;
  if(m>0.05){const k=Math.min(1,m)/m;f*=k;s*=k;
@@ -412,12 +628,12 @@ function loop(now){const dt=Math.min(0.05,(now-last)/1000);last=now;
   moved=Math.hypot(nx-px,nz-pz);px=nx;pz=nz;}
  dist+=moved;bob+=moved*Math.PI/0.72;
  if(dist>=0.72){dist-=0.72;step(run?1:0.8);}
- cam.position.set(px,EYE+Math.abs(Math.sin(bob))*0.025*(moved>0?1:0.6),pz);
+ cam.position.set(px,EYE+Math.abs(Math.sin(bob))*0.025*(moved>0?1:0.6)+shake*(Math.sin(now*0.031)*0.004+Math.sin(now*0.017)*0.003),pz);
  cam.rotation.set(pitch,yaw,0);
  const anyHot=(x,y)=>!!pick(x,y)||!!pickPic(x,y)||!!pickTxt(x,y)||pickCat(x,y)||pickGB(x,y)||pickDoor(x,y);
  if(locked){cam.updateMatrixWorld();cross.classList.toggle('hot',anyHot(0,0));}
  else if(dragMode&&!viewing&&!(dragged)){cam.updateMatrixWorld();renderer.domElement.style.cursor=anyHot(mx/innerWidth*2-1,-(my/innerHeight)*2+1)?'pointer':'grab';}
- hud.textContent=`Position ${(L/2-pz).toFixed(1)} m / ${L} m`;
+ if(mode==='gallery')hud.textContent=`Position ${Math.max(0,L/2-pz).toFixed(1)} m / ${L} m`;
  renderer.render(scene,cam);requestAnimationFrame(loop);}
 requestAnimationFrame(loop);
 })();
