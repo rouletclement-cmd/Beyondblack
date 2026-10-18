@@ -472,20 +472,23 @@ async function doorSequence(){introStage=1;sfxNoise(1.5,320,140,0.12);await twee
  sfxNoise(1.3,500,900,0.06);await tween(1.4,k=>cabA.setDoors(k));cabinOpen=true;introStage=3;}
 const blackout=document.getElementById('blackout');
 function dark(on){blackout.style.opacity=on?1:0;}
-async function cabinSequence(){introStage=4;
- await sleep(1.0);
+async function cabinSequence(){introStage=4;canMove=false;canLook=false;lockYaw=yaw;lockPitch=pitch;
+ const x0=px,z0=pz;await tween(0.7,k=>{px=x0+(OX-x0)*k;pz=z0+(-0.12-z0)*k;});
+ await turnTo(Math.PI,0,1.2);
  sfxNoise(1.3,900,500,0.06);await tween(1.5,k=>cabA.setDoors(1-k));cabinOpen=false;
- await sleep(0.6);
- // clignotements, avec deux passages au noir complet
- const seq=[[1,.08],[0,.06],[1,.12],[0,.05],[1,.05],['B',.32],[1,.1],[0,.08],[1,.06],[0,.14],[1,.05],['B',.45],[0,.1],[1,.04],[0,.2]];
- for(const [st,d] of seq){if(st==='B'){dark(true);cabA.light.intensity=0;cabA.lampMat.emissiveIntensity=0.02;}else{dark(false);cabA.light.intensity=st?1.1:0.0;cabA.lampMat.emissiveIntensity=st?1:0.02;}click();await sleep(d);}
- dark(true);await sleep(0.6);cabA.title.visible=true;cabA.light.intensity=1.1;cabA.lampMat.emissiveIntensity=1;dark(false);
- await sleep(1.2);
+ await sleep(0.5);
+ // la lumière clignote, puis s'éteint complètement une seule fois
+ const seq=[[1,.08],[0,.06],[1,.12],[0,.05],[1,.05],[0,.1],[1,.07],[0,.08],[1,.06],[0,.12],[1,.05]];
+ for(const [st,d] of seq){cabA.light.intensity=st?1.1:0.0;cabA.lampMat.emissiveIntensity=st?1:0.02;click();await sleep(d);}
+ dark(true);cabA.light.intensity=0;cabA.lampMat.emissiveIntensity=0.02;await sleep(0.9);
+ cabA.title.visible=true;cabA.light.intensity=1.1;cabA.lampMat.emissiveIntensity=1;dark(false);
+ await sleep(0.4);await turnTo(0,0.02,1.5);
  humStart(0.09);shake=1;await sleep(7.0);shake=0;humStop();
  // arrivée : même place dans la cabine de la galerie (tournée de 180°)
- const lx=px-OX,lz=pz;mode='gallery';applyMode();seaStop();px=-lx;pz=CBZ-lz;yaw+=Math.PI;cabB.setDoors(0);
- ding();await sleep(0.9);
- sfxNoise(1.3,500,900,0.06);await tween(1.5,k=>cabB.setDoors(k));introStage=9;}
+ const lx=px-OX,lz=pz;mode='gallery';applyMode();seaStop();px=-lx;pz=CBZ-lz;lockYaw+=Math.PI;yaw=lockYaw;cabB.setDoors(0);
+ ding();await sleep(0.8);await turnTo(0,0,1.3);
+ sfxNoise(1.3,500,900,0.06);await tween(1.5,k=>cabB.setDoors(k));
+ canMove=true;canLook=true;yaw=lockYaw;pitch=lockPitch;introStage=9;}
 function introTick(dt){tickScript(dt);seaMat.uniforms.t.value+=dt;seaMat.uniforms.camPos.value.copy(cam.position);npcUpdate(dt);bubbleUpdate(dt);
  if(mode==='intro'&&introStage===0&&started&&pz<5.4)doorSequence();
  if(mode==='intro'&&introStage===3&&cabinOpen&&Math.hypot(px-OX,pz)<0.42)cabinSequence();}
